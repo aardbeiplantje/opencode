@@ -2,7 +2,6 @@
 
 DOCKER_IMAGE=${DOCKER_IMAGE:-opencode:latest}
 exec docker run --rm -it \
-    --pull=always \
     -e TERM \
     -e ALL_PROXX= \
     -e HTTP_PROXY= \
