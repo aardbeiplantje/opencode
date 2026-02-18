@@ -18,6 +18,10 @@ system("chown", "-R", "1000:1000", "/home/node") == 0
 system("chmod", "-R", "u+rwX,g+rwX,o+rX", "/home/node") == 0
     or die "Error setting permissions on /home/node: $!";
 
+chown(1000, 1000, "/workspace")
+    or die "Error changing ownership of /workspace to 1000: $!";
+
+$! = 0;
 umask 0022;
 die "Error setting umask 0022: $!"
     if $!;
@@ -60,7 +64,7 @@ die "Error: Running as root is not allowed"
     if $< == 0;
 
 # Set HOME environment variable for node user
-$ENV{HOME} = "/home/node";
+$ENV{HOME} = "/workspace";
 $ENV{LOGNAME} = "node";
 
 exec("/home/node/.opencode/bin/opencode", @ARGV)

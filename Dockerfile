@@ -24,17 +24,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 ARG USERNAME=node
 
-RUN mkdir -p /workspace && chown -R $USERNAME /workspace
-
-WORKDIR /workspace
-
-# Persist bash history.
-RUN SNIPPET="export PROMPT_COMMAND='history -a' && export HISTFILE=/workspace/.bash_history" \
-  && touch /workspace/.bash_history \
-  && chown -R $USERNAME /workspace \
-  && chmod o+rw /workspace/.bash_history
-
-
 # Set up non-root user
 USER node
 
@@ -59,12 +48,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY opencode.pl /
 COPY config.json /home/node/config.json
 
-USER node
+USER root
+WORKDIR /workspace
 ENV T_UID=1000
 ENV PATH=$PATH:/home/node/.local/bin
-RUN mkdir -p /workspace/workdir && chown node:node /workspace/workdir
-WORKDIR /workspace/workdir
-USER root
 ENV OPENCODE_CONFIG=/home/node/config.json
-ENV OPENCODE_CONFIG_DIR=/home/node
+ENV OPENCODE_CONFIG_DIR=/workspace
 ENTRYPOINT ["/usr/bin/perl", "/opencode.pl"]
