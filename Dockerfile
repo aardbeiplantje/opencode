@@ -57,6 +57,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   perl \
   && apt-get clean && rm -rf /var/lib/apt/lists/*
 COPY opencode.pl /
+COPY config.json /home/node/config.json
 
 USER node
 ENV T_UID=1000
@@ -64,4 +65,6 @@ ENV PATH=$PATH:/home/node/.local/bin
 RUN mkdir -p /workspace/workdir && chown node:node /workspace/workdir
 WORKDIR /workspace/workdir
 USER root
+ENV OPENCODE_CONFIG=/home/node/config.json
+ENV OPENCODE_CONFIG_DIR=/home/node
 ENTRYPOINT ["/usr/bin/perl", "/opencode.pl"]

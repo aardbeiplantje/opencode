@@ -3,10 +3,12 @@
 DOCKER_IMAGE=${DOCKER_IMAGE:-opencode:latest}
 exec docker run --rm -it \
     -e TERM \
-    -e ALL_PROXX= \
-    -e HTTP_PROXY= \
-    -e HTTPS_PROXY= \
+    -e ALL_PROXX \
+    -e HTTP_PROXY \
+    -e HTTPS_PROX \
     -e UID=${EUID} \
+    -e LLAMA_SERVER_URL \
+    -e LLAMA_MODEL \
     --name opencode \
     -v opencode:/workspace \
     -v "${PWD}":/workspace/workdir \
