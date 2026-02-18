@@ -1,0 +1,15 @@
+#!/bin/bash
+
+DOCKER_IMAGE=${DOCKER_IMAGE:-opencode:latest}
+exec docker run --rm -it \
+    --pull=always \
+    -e TERM \
+    -e ALL_PROXX= \
+    -e HTTP_PROXY= \
+    -e HTTPS_PROXY= \
+    -e UID=${EUID} \
+    --name opencode \
+    -v opencode:/workspace \
+    -v "${PWD}":/workspace/workdir \
+        "$DOCKER_IMAGE" \
+            $*
