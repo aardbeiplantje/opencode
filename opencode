@@ -1,5 +1,6 @@
 #!/bin/bash
 
+export LLAMA_SERVER_URL=${LLAMA_SERVER_URL?"Please set the LLAMA_SERVER_URL environment variable."}
 DOCKER_IMAGE=${DOCKER_IMAGE:-opencode:latest}
 exec docker run --rm -it \
     -e TERM \
@@ -9,8 +10,8 @@ exec docker run --rm -it \
     -e UID=${EUID} \
     -e LLAMA_SERVER_URL \
     -e LLAMA_MODEL \
-    --name opencode \
-    -v opencode:/workspace \
+    --name opencode-${LOGNAME} \
+    -v opencode-${LOGNAME}:/workspace \
     -v "${PWD}":/workspace/workdir \
         "$DOCKER_IMAGE" \
             $*
