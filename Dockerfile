@@ -2,6 +2,7 @@ FROM node:24 AS runtime
 
 LABEL author="aardbeiplantje@gmail.com"
 LABEL description="Docker image for opencode - AI-powered CLI tool with secure non-root execution environment"
+LABEL version="0.1.0"
 
 # Install basic development tools and iptables/ipset
 RUN apt-get update && apt-get install -y --no-install-recommends \
