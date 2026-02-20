@@ -64,7 +64,7 @@ die "Error: Running as root is not allowed"
     if $< == 0;
 
 # Set HOME environment variable for node user
-$ENV{HOME} = "/workspace";
+$ENV{HOME} = "/home/node";
 $ENV{LOGNAME} = "node";
 
 exec("/home/node/.opencode/bin/opencode", @ARGV)
