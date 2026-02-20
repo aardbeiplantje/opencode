@@ -13,18 +13,15 @@ $) = 1000;
 die "Error setting EGID to 1000: $!"
     if $!;
 
-system("chown", "-R", "1000:1000", "/home/node") == 0
-    or die "Error changing ownership of /home/node to 1000: $!";
-system("chmod", "-R", "u+rwX,g+rwX,o+rX", "/home/node") == 0
-    or die "Error setting permissions on /home/node: $!";
+my $node_home = "/home/node";
+
+system("chown", "-R", "1000:1000", $node_home) == 0
+    or die "Error changing ownership of $node_home to 1000: $!";
+system("chmod", "-R", "u+rwX,g+rwX,o+rX", $node_home) == 0
+    or die "Error setting permissions on $node_home: $!";
 
 chown(1000, 1000, "/workspace")
     or die "Error changing ownership of /workspace to 1000: $!";
-
-$! = 0;
-umask 0022;
-die "Error setting umask 0022: $!"
-    if $!;
 
 if (-d "/workspace/workdir"){
     chdir("/workspace/workdir")
@@ -63,9 +60,14 @@ if($< == 0){
 die "Error: Running as root is not allowed"
     if $< == 0;
 
+$! = 0;
+umask 0022;
+die "Error setting umask 0022: $!"
+    if $!;
+
 # Set HOME environment variable for node user
-$ENV{HOME} = "/home/node";
+$ENV{HOME} = $node_home;
 $ENV{LOGNAME} = "node";
 
-exec("/home/node/.opencode/bin/opencode", @ARGV)
+exec("$node_home/.opencode/bin/opencode", @ARGV)
     or die "Failed to exec: $!";
