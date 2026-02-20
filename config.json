@@ -1,5 +1,6 @@
 {
   "$schema": "https://opencode.ai/config.json",
+  "model": "llama.cpp/{env:LLAMA_MODEL}",
   "provider": {
     "llama.cpp": {
       "npm": "@ai-sdk/openai-compatible",
@@ -10,21 +11,6 @@
       "models": {
         "{env:LLAMA_MODEL}": {
           "name": "{env:LLAMA_MODEL}"
-        },
-        "opencode.thinking": {
-          "name": "opencode.thinking"
-        },
-        "opencode.code": {
-          "name": "opencode.code"
-        },
-        "opencode.instruct": {
-          "name": "opencode.instruct"
-        },
-        "opencode.gemma": {
-          "name": "opencode.gemma"
-        },
-        "gpt-oss-120b": {
-          "name": "gpt-oss-120b"
         }
       }
     }

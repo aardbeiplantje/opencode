@@ -1,7 +1,8 @@
 #!/bin/bash
 
 export LLAMA_SERVER_URL=${LLAMA_SERVER_URL?"Please set the LLAMA_SERVER_URL environment variable."}
-DOCKER_IMAGE=${DOCKER_IMAGE:-opencode:latest}
+export LLAMA_MODEL=${LLAMA_MODEL:-opencode.code}
+export DOCKER_IMAGE=${DOCKER_IMAGE:-opencode:latest}
 exec docker run --rm -it \
     -e TERM \
     -e ALL_PROXX \
