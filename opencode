@@ -1,17 +1,30 @@
 #!/bin/bash
 
-export LLAMA_SERVER_URL=${LLAMA_SERVER_URL?"Please set the LLAMA_SERVER_URL environment variable."}
+export LLAMA_SERVER_URL=${LLAMA_SERVER_URL:-http://[::]:4000/v1}
 export LLAMA_MODEL=${LLAMA_MODEL:-opencode.code}
 export DOCKER_IMAGE=${DOCKER_IMAGE:-opencode:latest}
+extra_cmd=
+if [ ! -z "${OPENCODE_CONFIG}" -a -f "${OPENCODE_CONFIG}" ]; then
+    extra_cmd="-v ${OPENCODE_CONFIG}:${OPENCODE_CONFIG}:ro -e OPENCODE_CONFIG"
+fi
+export OPENCODE_CONFIG
+HERE=$(readlink -f "${PWD}")
+BDIR=${HERE##*/}
 exec docker run --rm -it \
     -e TERM \
     -e ALL_PROXX \
     -e HTTP_PROXY \
     -e HTTPS_PROX \
+    -e TMPDIR=/workspace/$BDIR/.tmp \
+    -e NODE_TLS_REJECT_UNAUTHORIZED=0 \
+    -e NODE_OPTIONS="--max-old-space-size=4096" \
     -e UID=${EUID} \
+    -e BDIR=/workspace/$BDIR \
     -e LLAMA_SERVER_URL \
     -e LLAMA_MODEL \
-    --name opencode-${LOGNAME} \
+    --network=host \
+    $extra_cmd \
+    --name opencode-${LOGNAME}-${BDIR} \
     -v opencode-${LOGNAME}:/workspace \
     -v "${PWD}":/workspace/workdir \
         "$DOCKER_IMAGE" \

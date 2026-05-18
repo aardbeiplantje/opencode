@@ -48,6 +48,7 @@ USER root
 RUN apt-get update && apt-get install -y --no-install-recommends \
   perl \
   && apt-get clean && rm -rf /var/lib/apt/lists/*
+RUN rm -rf /tmp/* /tmp/.*.so
 COPY opencode.pl /
 COPY config.json /home/node/config.json
 
