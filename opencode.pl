@@ -70,20 +70,24 @@ if($< == 0 and length($ENV{UID}//"")){
         close($fh);
     }
 
+    # Drop to GID 986 109 992
+    $) = "1000 986 992 109";
+    $( = $);
     # Drop to the specified UID
     $> = $target_uid;
-    $! = 0;
-    $< = $target_uid;
+    $< = $>;
     die "Error setting UID to $target_uid: $!"
         if $!;
 }
 
 # If still running as root (no UID env var), default to UID 1000
 if($< == 0){
+    # Drop to GID 986 109 992
+    $) = "1000 986 992 109";
+    $( = $);
     # Drop to UID 1000
     $> = 1000;
-    $! = 0;
-    $< = 1000;
+    $< = $>;
     die "Error setting UID to 1000: $!"
         if $!;
 }

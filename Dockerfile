@@ -24,8 +24,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   jq \
   nano \
   vim \
-  socat \
-  curl \
+   socat \
+   ca-certificates \
+   curl \
   lsof \
   strace \
   openssl \
@@ -49,20 +50,27 @@ WORKDIR /workspace
 RUN opencode run "dummy"
 
 USER root
-RUN apt-get update && apt-get install -y --no-install-recommends \
-  perl \
-  libwww-curl-perl \
-  libnet-ssleay-perl \
-  lua5.4 \
-  make \
-  gcc \
-  g++ \
-  python3 \
-  python3-pip \
-  python3-pip-whl \
-  python3-venv \
-  python3-requests \
-  && apt-get clean && rm -rf /var/lib/apt/lists/*
+RUN curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/trusted.gpg.d/docker.asc && \
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/trusted.gpg.d/docker.asc] https://download.docker.com/linux/ubuntu jammy stable" > /etc/apt/sources.list.d/docker.list && \
+    apt-get update && apt-get install -y --no-install-recommends \
+      perl \
+      libwww-curl-perl \
+      libnet-ssleay-perl \
+      lua5.4 \
+      make \
+      gcc \
+      g++ \
+      python3 \
+      python3-pip \
+      python3-pip-whl \
+      python3-venv \
+      python3-requests \
+      docker-ce \
+      docker-ce-cli \
+      docker-ce-rootless-extras \
+      docker-compose-plugin \
+      docker-buildx-plugin \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 RUN rm -rf /tmp/* /tmp/.*.so
 COPY opencode.pl /
 COPY config.json /home/node/config.json

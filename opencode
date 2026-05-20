@@ -11,12 +11,15 @@ fi
 export OPENCODE_CONFIG
 
 extra_opts=
+
+# share ssh keys (dangerous)
 if [ ! -z "$SSH_AUTH_SOCK" ]; then
     b_sock=$(readlink -f "$SSH_AUTH_SOCK")
     b_dir=${b_sock##*/}
     export C_SSH_AUTH_SOCK=/dev/shm/$b_dir
     extra_opts="-v $SSH_AUTH_SOCK:/dev/shm/$b_dir -e SSH_AUTH_SOCK=$C_SSH_AUTH_SOCK $extra_opts"
 fi
+
 # Share Docker socket if available and set DOCKER_HOST
 DOCKER_HOST_VAR=""
 if [ -S /var/run/docker.sock ]; then
@@ -26,6 +29,7 @@ elif [ ! -z "$DOCKER_HOST" ]; then
     # If DOCKER_HOST is set externally (e.g., remote docker), pass it through
     DOCKER_HOST_VAR="$DOCKER_HOST"
 fi
+
 # Share containerd socket and config
 CONTAINERD_ADDRESS_VAR=""
 if [ -S /run/containerd/containerd.sock ]; then
@@ -39,6 +43,7 @@ if [ -d /etc/containerd ]; then
     extra_opts="-v /etc/containerd:/etc/containerd:ro $extra_opts"
 fi
 
+# Share git info
 if [ -f ~/.gitconfig ]; then
     fn=$(readlink -f ~/.gitconfig)
     extra_opts="-v $fn:/home/node/.gitconfig:ro $extra_opts"
@@ -48,9 +53,14 @@ if [ -f ~/.gitexcludes ]; then
     extra_opts="$extra_opts -v $fn:/home/node/.gitexcludes:ro $extra_opts"
 fi
 
+# Share Docker config for registry authentication and buildx state
+if [ -d ~/.docker ]; then
+    extra_opts="-v $HOME/.docker:/home/node/.docker $extra_opts"
+fi
+
 HERE=$(readlink -f "${PWD}")
 BDIR=${HERE##*/}
-docker pull -q $DOCKER_IMAGE
+docker pull -q $DOCKER_IMAGE || { echo "problem fetching $DOCKER_IMAGE"; exit $?; }
 exec docker run --rm -it \
     $extra_opts \
     $DOCKER_RUN_OPTS \
@@ -67,6 +77,17 @@ exec docker run --rm -it \
     ${CONTAINERD_ADDRESS_VAR:+-e CONTAINERD_ADDRESS=$CONTAINERD_ADDRESS_VAR} \
     -e LLAMA_SERVER_URL \
     -e LLAMA_MODEL \
+    --ulimit memlock=-1:-1 \
+    --ulimit stack=67108864:67108864 \
+    --group-add=video \
+    --ipc=host \
+    --cap-add=SYS_PTRACE \
+    --security-opt seccomp=unconfined \
+    --group-add 986 \
+    --group-add 109 \
+    --group-add 992 \
+    --device /dev/kfd \
+    --device /dev/dri \
     --network=host \
     $extra_cmd \
     --name opencode-${LOGNAME}-${BDIR} \
