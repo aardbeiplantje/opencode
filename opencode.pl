@@ -110,5 +110,5 @@ $ENV{LOGNAME} = "node";
 $ENV{OPENCODE_AUTO_SHARE} = "/workspace/.opencode";
 
 # Execute the actual opencode CLI with all provided arguments
-exec("/home/node/.opencode/bin/opencode", @ARGV)
+exec("/home/node/.npm-global/bin/opencode", @ARGV)
     or die "Failed to exec: $!";

@@ -9,17 +9,17 @@
       },
       "models": {
         "{env:LLAMA_MODEL}": {
-          "options": {
-            "thinking": {
-              "type": "enabled",
-              "budgetTokens": 1000000
-            },
-            "textVerbosity": "low",
-            "reasoning": "high",
-            "reasoningSummary": "auto",
-            "include": ["reasoning.encrypted_content"]
+          "name": "{env:LLAMA_MODEL}",
+          "constraints": {
+              "jsonMode": true
           },
-          "name": "{env:LLAMA_MODEL}"
+          "parameters": {
+            "stop": ["<|im_end|>", "<|object_ref_start|>"],
+            "temperature": 0.1
+          },
+          "extraArgs": {
+            "system_prompt_prefix": "You are an expert software engineer. You must communicate exclusively in English. All tool execution variables, script paths, filenames, and reasoning strings MUST be written using standard alphanumeric English characters."
+          }
         }
       }
     }

@@ -1,4 +1,4 @@
-FROM node:24 AS runtime
+FROM node:26-trixie-slim AS runtime
 
 LABEL author="aardbeiplantje@gmail.com"
 LABEL description="Docker image for opencode - AI-powered CLI tool with secure non-root execution environment"
@@ -24,6 +24,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   jq \
   nano \
   vim \
+  socat \
+  curl \
+  lsof \
+  strace \
+  openssl \
+  bash \
+  openssh-client \
   && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Set up non-root user
@@ -37,17 +44,24 @@ RUN npm set prefix /home/node/
 RUN npm install -g npm
 RUN npm install -g bun
 RUN npm install -g @ai-sdk/openai-compatible
-ADD --chown=node:node https://opencode.ai/install /tmp/install_opencode.sh
+RUN npm install -g opencode-ai
 WORKDIR /workspace
-ARG CACHEBUST=1
-RUN chmod +x /tmp/install_opencode.sh \
-    && bash /tmp/install_opencode.sh \
-    && opencode run "dummy" \
-    && rm -rf /tmp/install_opencode.sh
+RUN opencode run "dummy"
 
 USER root
 RUN apt-get update && apt-get install -y --no-install-recommends \
   perl \
+  libwww-curl-perl \
+  libnet-ssleay-perl \
+  lua5.4 \
+  make \
+  gcc \
+  g++ \
+  python3 \
+  python3-pip \
+  python3-pip-whl \
+  python3-venv \
+  python3-requests \
   && apt-get clean && rm -rf /var/lib/apt/lists/*
 RUN rm -rf /tmp/* /tmp/.*.so
 COPY opencode.pl /
