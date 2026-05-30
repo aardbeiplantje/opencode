@@ -4,12 +4,12 @@ DOCKER_IMAGE=${DOCKER_IMAGE:-opencode:latest}
 HERE=$(readlink -f "${PWD}")
 BDIR=${HERE##*/}
 
-extra_cmd=
-if [ ! -z "${OPENCODE_CONFIG}" -a -f "${OPENCODE_CONFIG}" ]; then
-    extra_cmd="-v ${OPENCODE_CONFIG}:${OPENCODE_CONFIG}:ro -e OPENCODE_CONFIG=$OPENCODE_CONFIG"
-fi
-
 extra_opts=
+
+# opencode config specified?
+if [ ! -z "${OPENCODE_CONFIG}" -a -f "${OPENCODE_CONFIG}" ]; then
+    extra_opts="-v ${OPENCODE_CONFIG}:${OPENCODE_CONFIG}:ro -e OPENCODE_CONFIG=$OPENCODE_CONFIG"
+fi
 
 # share ssh keys (dangerous)
 if [ ! -z "$SSH_AUTH_SOCK" ]; then
@@ -20,9 +20,13 @@ if [ ! -z "$SSH_AUTH_SOCK" ]; then
 fi
 
 # Share Docker socket if available and set DOCKER_HOST
-if [ ! -z "$DOCKER_HOST" -a -S "$DOCKER_HOST" ]; then
-    extra_opts="-v $DOCKER_HOST:/tmp/docker.sock $extra_opts"
-    d_host=unix:///tmp/docker.sock
+if [ ! -z "$DOCKER_HOST" ]; then
+    if [ -S "$DOCKER_HOST" ]; then
+        extra_opts="-v $DOCKER_HOST:/tmp/docker.sock $extra_opts"
+        d_host=unix:///tmp/docker.sock
+    else
+        d_host=$DOCKER_HOST
+    fi
 else
     s_v=opencode-dind-$LOGNAME-$BDIR-dind-sock
     d_v=opencode-dind-$LOGNAME-$BDIR-dind-data
@@ -114,7 +118,6 @@ exec docker run --rm -it \
     --device /dev/kfd \
     --device /dev/dri \
     --network=host \
-    $extra_cmd \
     --name opencode-${LOGNAME}-${BDIR} \
     -v opencode-${LOGNAME}:/workspace \
     -v "${PWD}":/workdir/${BDIR} \
