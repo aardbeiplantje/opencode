@@ -14,9 +14,11 @@ use strict; use warnings;
 }
 
 use File::Path qw(make_path);
-use File::Find;
-use File::stat;
+use File::Find qw(find);
 
+my $UID = 1000;
+my $GID = 1000;
+my $workspace = "/workspace";
 
 sub copy_file {
     my ($src, $dst) = @_;
@@ -49,69 +51,69 @@ sub copy_tree {
                 my $st = lstat($_);
                 chmod($st->mode, $dest) if defined($st);
                 set_mtime($dest, $st->mtime) if defined($st);
-                chown(1000, 1000, $dest) if -e $dest;
+                chown($UID, $GID, $dest) if -e $dest;
             } elsif (-f $_) {
                 copy_file($_, $dest);
                 my $st = stat($_);
                 chmod($st->mode & 07777, $dest) if defined($st);
                 set_mtime($dest, $st->mtime) if defined($st);
-                chown(1000, 1000, $dest) if -e $dest;
+                chown($UID, $GID, $dest) if -e $dest;
             }
         },
     }, $src);
 }
 
-
 # Clear error flag before privilege operations
 $! = 0;
 
 # Drop group privileges: set real GID to 1000 (node group)
-$( = 1000;
-die "Error setting RGID to 1000: $!"
+$( = $GID;
+die "[ERROR] setting RGID to $UID: $!\n"
     if $!;
 $! = 0;
 
 # Set effective GID to 1000 and preserve docker group (983) in supplementary groups
 # Format: "primary_gid supplementary_gid1 supplementary_gid2 ..."
-$) = "1000 983";
-die "Error setting EGID to 1000 with docker group 983: $!"
+$) = "$GID 983";
+die "[ERROR] setting EGID to $GID with docker group 983: $!\n"
     if $!;
 
 # Set umask to 0022 (owner=rwx, group=rx, other=rx for new dirs; rw-r--r-- for files)
 umask 0022;
-die "Error setting umask 0022: $!"
+die "[ERROR] setting umask 0022: $!\n"
     if $!;
 
 # if containerd sock, group change it
-if(-S "/tmp/containerd.sock"){
-    chown(1000, 1000, "/tmp/containerd.sock")
-        or die "Error changing ownership of /tmp/containerd.sock to 1000: $!";
+my $ctr_s = $ENV{CONTAINERD_ADDRESS} // "";
+if(length($ctr_s) and -S $ctr_s){
+    chown($UID, $GID, $ctr_s)
+        or die "[ERROR] changing ownership of $ctr_s to $UID:$GID: $!\n";
 }
 
 # make /workspace/.bash_history
-my $history_path = "/workspace/.bash_history";
+my $history_path = "$workspace/.bash_history";
 if(!-f $history_path){
     open(my $fh, ">", $history_path)
-        or die "Failed to create $history_path: $!";
+        or die "[ERROR] failed to create $history_path: $!\n";
     close($fh);
-    chown(1000, 1000, $history_path)
-        or die "Error changing ownership of $history_path to 1000: $!";
+    chown($UID, $GID, $history_path)
+        or die "[ERROR] changing ownership of $history_path to $UID:$GID: $!\n";
 }
 
 # setup /workspace/.opencode
-for my $d ('.opencode', '.local', '.config', '.cache'){
-    my $sd = "/workspace/$d";
+foreach my $d ('.opencode', '.local', '.config', '.cache'){
+    my $sd = "$workspace/$d";
     if(!-d $sd){
         mkdir($sd)
-            or die "Failed to create directory $sd: $!";
+            or die "[ERROR] failed to create directory $sd: $!\n";
     }
-    chown(1000, 1000, $sd)
-        or die "Error changing ownership of $sd to 1000: $!";
+    chown($UID, $GID, $sd)
+        or die "[ERROR] changing ownership of $sd to $UID:$GID: $!\n";
 }
 
 # copy skills (overwrite existing files)
 my $skills_src = "/skills";
-my $skills_dir = "/workspace/.opencode/skills";
+my $skills_dir = "$workspace/.opencode/skills";
 if (-d $skills_src) {
     make_path($skills_dir) unless -d $skills_dir;
     copy_tree($skills_src, $skills_dir);
@@ -121,51 +123,51 @@ if (-d $skills_src) {
 if($< == 0 and length($ENV{UID}//"")){
     local $! = 0;
     my $target_uid = $ENV{UID};
-    # Drop to GID 986 109 992
-    $) = "1000 986 992 109";
+    # Drop to GID
+    $) = "$GID 986 992 109";
     $( = $);
-    # Drop to the specified UID
+    # Drop to UID
     $> = $target_uid;
     $< = $>;
-    die "Error setting UID to $target_uid: $!"
+    die "[ERROR] setting UID to $target_uid: $!\n"
         if $!;
 }
 
 # If still running as root (no UID env var), default to UID 1000
 if($< == 0){
     local $! = 0;
-    # Drop to GID 986 109 992
-    $) = "1000 986 992 109";
+    # Drop to GID
+    $) = "$GID 986 992 109";
     $( = $);
-    # Drop to UID 1000
-    $> = 1000;
+    # Drop to UID
+    $> = $UID;
     $< = $>;
-    die "Error setting UID to 1000: $!"
+    die "[ERROR] setting UID to $UID: $!\n"
         if $!;
 }
 
 # Final safety check: ensure we're not running as root
-die "Error: Running as root is not allowed"
+die "[ERROR] running as root is not allowed\n"
     if $< == 0;
 
-$ENV{XDG_CACHE_HOME} = "/workspace/.cache";
+$ENV{XDG_CACHE_HOME} = "$workspace/.cache";
 $ENV{PROMPT_COMMAND} = 'history -a';
 $ENV{HISTFILE} = $history_path;
 
 # Set HOME environment variable for node user
-$ENV{HOME} = "/workspace";
+$ENV{HOME} = $workspace;
 $ENV{LOGNAME} = "node";
 $ENV{PATH} = "$ENV{PATH}:$ENV{ROCM_PATH}/bin" if length($ENV{ROCM_PATH}//"");
 
 # $ENV{BDIR} was mounted on /workdir/$BDIR
 if($ENV{BDIR}){
     chdir("/workdir/$ENV{BDIR}")
-        or die "Error chdir to /workdir/$ENV{BDIR}: $!\n";
+        or die "[ERROR] chdir to /workdir/$ENV{BDIR}: $!\n";
 } else {
     chdir("/workdir")
-        or die "Error chdir to /workdir/: $!\n";
+        or die "[ERROR] chdir to /workdir/: $!\n";
 }
 
 # Execute the actual opencode CLI with all provided arguments
 exec("/home/node/.npm-global/bin/opencode", @ARGV)
-    or die "Failed to exec: $!";
+    or die "[ERROR] failed to exec: $!\n";
