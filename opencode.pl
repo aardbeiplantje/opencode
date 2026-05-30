@@ -1,4 +1,6 @@
 #!/usr/bin/perl
+#
+#  ↓ root user
 
 use strict; use warnings;
 
@@ -16,6 +18,7 @@ use strict; use warnings;
 use File::Path qw(make_path);
 use File::Find qw(find);
 use File::stat;
+use POSIX ();
 
 my $UID = 1000;
 my $GID = 1000;
@@ -116,6 +119,78 @@ if (-d $skills_src) {
     copy_tree($skills_src, $skills_dir);
 }
 
+# check DOCKER_HOST
+if(($ENV{DIND}//0) == 1 and !length($ENV{DOCKER_HOST}//"")){
+    # run dockerd ourselves, like dind
+    mkdir("$workspace/docker")
+        or (!$!{EEXIST} and die "[ERROR] problem making $workspace/docker: $!\n");
+    local $SIG{HUP}  = 'IGNORE';
+    local $SIG{INT}  = 'DEFAULT';
+    local $SIG{TERM} = 'DEFAULT';
+    local $SIG{QUIT} = 'DEFAULT';
+    local $SIG{CHLD} = 'IGNORE';
+    local $SIG{ALRM} = 'IGNORE';
+    my $c_pid = fork();
+    if($c_pid){
+        # original process here
+        $ENV{DOCKER_HOST} = "unix:///tmp/docker.sock";
+    } elsif(!defined $c_pid){
+        die "[ERROR] couldn't fork for daemonizing dockerd: $!\n";
+    } else {
+        eval {
+            POSIX::setsid() != -1 or (!$!{EPERM} and die "problem making new session/process group dockerd: $!\n");
+            chdir('/')                 or die "Cannot chdir to '/': $!\n";
+            umask(0022);
+            # redirect STDOUT
+            my $l_file = POSIX::strftime("$workspace/docker/docker-%Y%m%d-%H:%M:%S.log", gmtime());
+            open(my $l_fh, ">", $l_file)
+                or die "Can't open $l_file for dockerd logging: $!\n";
+            open(STDOUT, '>&', $l_fh)
+                or die "Can't dup STDOUT to $l_file: $!\n";
+            *STDOUT->autoflush();
+            *STDERR->autoflush();
+            open(STDERR, '>&STDOUT')   or die "Can't dup STDERR to STDOUT: $!\n";
+            open(STDIN,  '</dev/null') or die "Can't read /dev/null: $!\n";
+
+            # dup() sets $! as ioctl() is done in perl, so reset ERRNO
+            $! = 0;
+
+            my $c_pid = fork();
+            if($c_pid){
+                POSIX::_exit(0);
+            } elsif(!defined $c_pid){
+                die "[ERROR] couldn't second fork for daemonizing dockerd: $!\n";
+            } else {
+                # forked worker second
+                no warnings;
+                exec {"dockerd"} "dockerd", 
+                    "--raw-logs",
+                    "--log-level", "error",
+                    "--log-format", "text",
+                    "--host=unix:///tmp/docker.sock",
+                    "-G", "1000",
+                    "-D",
+                    "--data-root", "$workspace/docker";
+                # likely not reached, but if dockerd isn't found, it is, so exit!
+                print "[ERROR] failed running dockerd: $!\n";
+                POSIX::_exit(2);
+            }
+        };
+        # there are cases that we get here, mostly signals and/or die/eval
+        # caches (not the case here), also, "exit" handles END blocks, which
+        # can do nasty stuff. As we really don't want this worker process to
+        # continue, we use POSIX _exit
+        chomp(my $err = $@);
+        print "[ERROR] problem setting up fork/daemon for dockerd: $err\n";
+        POSIX::_exit(1);
+    }
+
+    # re-own the docker data dir
+    sleep(1);
+    chown($UID, $GID, "$workspace/docker")
+        or die "[ERROR] problem chwon $UID:$GID /workspace/docker: $!\n";
+}
+
 # If running as root and UID environment variable is set, use that UID
 my $target_uid = $ENV{UID} // $UID;
 if($< == 0){
@@ -141,6 +216,11 @@ die "[ERROR] running as root EUID/RUID is not allowed\n"
     if $< == 0 or $> == 0;
 die "[ERROR] running as root EGID/RGID is not allowed\n"
     if $( == 0 or $) == 0;
+
+#  ↑ root user
+#--------------------------------------------------------
+#  ↓ user 1000 (node)
+#
 
 $ENV{XDG_CACHE_HOME} = "$workspace/.cache";
 $ENV{PROMPT_COMMAND} = 'history -a';

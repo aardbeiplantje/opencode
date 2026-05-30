@@ -21,13 +21,15 @@ fi
 
 # Share Docker socket if available and set DOCKER_HOST
 if [ ! -z "$DOCKER_HOST" ]; then
-    if [ -S "$DOCKER_HOST" ]; then
-        extra_opts="-v $DOCKER_HOST:/tmp/docker.sock $extra_opts"
+    d_sock=${DOCKER_HOST##unix://}
+    if [ -S "$d_sock" ]; then
+        extra_opts="-v $d_sock:/tmp/docker.sock $extra_opts"
         d_host=unix:///tmp/docker.sock
     else
         d_host=$DOCKER_HOST
     fi
 else
+    if [ 1 = 0 ]; then
     s_v=opencode-dind-$LOGNAME-$BDIR-dind-sock
     d_v=opencode-dind-$LOGNAME-$BDIR-dind-data
     n_v=opencode-dind-$LOGNAME-$BDIR
@@ -49,6 +51,7 @@ else
     fi
     extra_opts="-v $s_v:/tmp/dind:rw $extra_opts"
     d_host=unix:///tmp/dind/docker.sock
+    fi
 fi
 
 # Share containerd socket and config
@@ -88,6 +91,7 @@ exec docker run --rm -it \
     -e NODE_TLS_REJECT_UNAUTHORIZED=0 \
     -e NODE_OPTIONS="--max-old-space-size=4096" \
     -e UID=${EUID} \
+    -e LOGNAME \
     -e BDIR="${BDIR}" \
     ${d_host:+-e DOCKER_HOST=$d_host} \
     ${c_address:+-e CONTAINERD_ADDRESS=$c_address} \
@@ -102,8 +106,10 @@ exec docker run --rm -it \
     -e ROCM_PATH=/opt/rocm \
     -e OPENCODE_EXPERIMENTAL_DISABLE_COPY_ON_SELECT=true \
     -e DISPLAY \
+    -e DIND \
     -v /tmp/.X11-unix:/tmp/.X11-unix:ro \
     -v $ROCM_PATH:/opt/rocm:ro \
+    --privileged=true \
     --ulimit memlock=-1:-1 \
     --ulimit stack=67108864:67108864 \
     --group-add=video \
