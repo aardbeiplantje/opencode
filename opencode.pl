@@ -64,21 +64,6 @@ sub copy_tree {
     }, $src);
 }
 
-# Clear error flag before privilege operations
-$! = 0;
-
-# Drop group privileges: set real GID to 1000 (node group)
-$( = $GID;
-die "[ERROR] setting RGID to $UID: $!\n"
-    if $!;
-$! = 0;
-
-# Set effective GID to 1000 and preserve docker group (983) in supplementary groups
-# Format: "primary_gid supplementary_gid1 supplementary_gid2 ..."
-$) = "$GID 983";
-die "[ERROR] setting EGID to $GID with docker group 983: $!\n"
-    if $!;
-
 # Set umask to 0022 (owner=rwx, group=rx, other=rx for new dirs; rw-r--r-- for files)
 umask 0022;
 die "[ERROR] setting umask 0022: $!\n"
@@ -91,7 +76,7 @@ if(length($ctr_s) and -S $ctr_s){
         or die "[ERROR] changing ownership of $ctr_s to $UID:$GID: $!\n";
 }
 
-# make /workspace/.bash_history
+# make /workspace/.bash_history, own by UID/GID
 my $history_path = "$workspace/.bash_history";
 if(!-f $history_path){
     open(my $fh, ">", $history_path)
@@ -99,6 +84,17 @@ if(!-f $history_path){
     close($fh);
     chown($UID, $GID, $history_path)
         or die "[ERROR] changing ownership of $history_path to $UID:$GID: $!\n";
+}
+
+# make /workspace/.bashrc own by root
+if(length($ENV{ROCM_PATH}//"")){
+    $ENV{PATH} = "$ENV{PATH}:$ENV{ROCM_PATH}/bin";
+    my $b_fn = "$workspace/.bashrc";
+    open(my $bfh, ">>$b_fn")
+        or die "[ERROR] failed opening $b_fn: $!\n";
+    print $bfh "PATH=$ENV{PATH}\nexport PATH\n";
+    close($bfh)
+        or die "[ERROR] failed close $b_fn: $!\n";
 }
 
 # setup /workspace/.opencode
@@ -121,35 +117,30 @@ if (-d $skills_src) {
 }
 
 # If running as root and UID environment variable is set, use that UID
-if($< == 0 and length($ENV{UID}//"")){
-    local $! = 0;
-    my $target_uid = $ENV{UID};
-    # Drop to GID
-    $) = "$GID 986 992 109";
-    $( = $);
-    # Drop to UID
-    $> = $target_uid;
-    $< = $>;
-    die "[ERROR] setting UID to $target_uid: $!\n"
-        if $!;
-}
-
-# If still running as root (no UID env var), default to UID 1000
+my $target_uid = $ENV{UID} // $UID;
 if($< == 0){
     local $! = 0;
     # Drop to GID
-    $) = "$GID 986 992 109";
+    $) = "$GID 983 986 992 109";
+    die "[ERROR] setting EGID to $GID: $!\n"
+        if $!;
     $( = $);
+    die "[ERROR] setting RGID to $): $!\n"
+        if $!;
     # Drop to UID
-    $> = $UID;
+    $> = $target_uid;
+    die "[ERROR] setting EUID to $target_uid: $!\n"
+        if $!;
     $< = $>;
-    die "[ERROR] setting UID to $UID: $!\n"
+    die "[ERROR] setting RUID to $>: $!\n"
         if $!;
 }
 
 # Final safety check: ensure we're not running as root
-die "[ERROR] running as root is not allowed\n"
-    if $< == 0;
+die "[ERROR] running as root EUID/RUID is not allowed\n"
+    if $< == 0 or $> == 0;
+die "[ERROR] running as root EGID/RGID is not allowed\n"
+    if $( == 0 or $) == 0;
 
 $ENV{XDG_CACHE_HOME} = "$workspace/.cache";
 $ENV{PROMPT_COMMAND} = 'history -a';
@@ -158,7 +149,6 @@ $ENV{HISTFILE} = $history_path;
 # Set HOME environment variable for node user
 $ENV{HOME} = $workspace;
 $ENV{LOGNAME} = "node";
-$ENV{PATH} = "$ENV{PATH}:$ENV{ROCM_PATH}/bin" if length($ENV{ROCM_PATH}//"");
 
 # $ENV{BDIR} was mounted on /workdir/$BDIR
 if($ENV{BDIR}){
