@@ -30,18 +30,23 @@ if [ ! -z "$DOCKER_HOST" -a -S "$DOCKER_HOST" ]; then
 else
     s_v=opencode-dind-$LOGNAME-$BDIR-dind-sock
     d_v=opencode-dind-$LOGNAME-$BDIR-dind-data
-    docker run \
-        --rm \
-        -d \
-        --name opencode-dind-$LOGNAME-$BDIR \
-        --privileged=true \
-        -v $s_v:/dind:rw \
-        -v $d_v:/var/lib/docker:rw \
-        docker:dind \
-          dockerd \
-            -G 1000 \
-            -D \
-            --host=unix:///dind/docker.sock
+    n_v=opencode-dind-$LOGNAME-$BDIR
+    ok=$(docker ps --format json -f name="$n_v"|jq -r .State)
+    if [ "$ok" != "running" ]; then
+        docker stop "$n_v" >/dev/null 2>&1 || true
+        docker run \
+            --rm \
+            -d \
+            --name "$n_v" \
+            --privileged=true \
+            -v $s_v:/dind:rw \
+            -v $d_v:/var/lib/docker:rw \
+            docker:dind \
+              dockerd \
+                -G 1000 \
+                -D \
+                --host=unix:///dind/docker.sock
+    fi
     extra_opts="-v $s_v:/tmp/dind:rw"
     d_host=unix:///tmp/dind/docker.sock
 fi
