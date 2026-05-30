@@ -15,6 +15,7 @@ use strict; use warnings;
 
 use File::Path qw(make_path);
 use File::Find qw(find);
+use File::stat;
 
 my $UID = 1000;
 my $GID = 1000;
