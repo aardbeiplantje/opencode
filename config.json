@@ -28,6 +28,5 @@
   "permission": {
       "edit": "allow",
       "bash": "allow"
-  },
-  "plugin": ["opencode-token-speed-plugin"]
+  }
 }
