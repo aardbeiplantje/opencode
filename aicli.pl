@@ -239,6 +239,13 @@ if($ENV{BDIR}){
         or die "[ERROR] chdir to /workdir/: $!\n";
 }
 
-# Execute the actual opencode CLI with all provided arguments
+# If first argument is 'pi', run pi-coding-agent instead
+if (@ARGV && $ARGV[0] eq "pi") {
+    # Remove the 'pi' command from arguments and pass rest to pi binary
+    shift @ARGV;
+    exec("/home/node/.npm-global/bin/pi", @ARGV)
+        or die "[ERROR] failed to exec pi: $!\n";
+}
+# Otherwise, run opencode CLI with all provided arguments
 exec("/home/node/.npm-global/bin/opencode", @ARGV)
     or die "[ERROR] failed to exec: $!\n";

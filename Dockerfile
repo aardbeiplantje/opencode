@@ -92,7 +92,7 @@ RUN rm -rf /tmp/* /tmp/.*.so
 RUN mkdir -p /workspace
 RUN mkdir -p /workdir
 RUN mkdir -p /opt/rocm
-COPY opencode.pl /
+COPY aicli.pl /
 COPY config.json /home/node/config.json
 COPY skills /skills/
 
@@ -103,7 +103,7 @@ ENV OPENCODE_CONFIG_DIR=/workspace
 ENV T_UID=1000
 ENV EDITOR=nano
 ENV VISUAL=nano
-ENTRYPOINT ["/usr/bin/perl", "/opencode.pl"]
+ENTRYPOINT ["/usr/bin/perl", "/aicli.pl"]
 
 FROM base AS runtime
 USER root
