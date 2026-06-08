@@ -1,0 +1,3 @@
+#!/bin/bash
+# Wrapper script for running the opencode container via aicli.sh.
+exec "$(dirname "$0")/aicli.sh" "$@"
