@@ -108,6 +108,7 @@ exec docker run --rm -it \
     --tmpfs /var/tmp:rw,suid,exec,size=1G \
     --device /dev/kfd \
     --device /dev/dri \
+    --device /dev/accel \
     --network=host \
     --name ${w##-}-${LOGNAME}-${BDIR} \
     -v ${w##-}-${LOGNAME}:/workspace \
