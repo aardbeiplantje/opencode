@@ -1,0 +1,8 @@
+{
+  "lemonade": {
+    "type": "oauth",
+    "refresh": "{\"baseUrl\":\"{env:LEMONADE_URL}\",\"apiKey\":\"nokey\",\"serverName\":\"Lemonade v10.7.0\"}",
+    "access": "nokey",
+    "expires": 1781706432105
+  }
+}

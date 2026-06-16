@@ -1,0 +1,11 @@
+{
+  "lastChangelogVersion": "0.79.4",
+  "theme": "dark",
+  "packages": [
+    "npm:pi-llama-cpp",
+    "git:github.com/lemonade-sdk/lemonade-pi-plugin@main"
+  ],
+  "defaultProvider": "lemonade",
+  "defaultModel": "Gemma-4-26B-A4B-it-GGUF",
+  "defaultThinkingLevel": "medium"
+}

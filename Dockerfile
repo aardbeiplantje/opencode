@@ -40,24 +40,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 RUN curl -fsSL https://downloads.arduino.cc/arduino-cli/arduino-cli_1.5.0-1_amd64.deb -o /tmp/arduino-cli.deb && dpkg -i /tmp/arduino-cli.deb && rm /tmp/arduino-cli.deb
 
-# Set up non-root user
-USER node
-
-ARG CACHEBUST=1
-ENV NPM_CONFIG_PREFIX=/home/node/.npm-global
-ENV PATH=$PATH:/home/node/.npm-global/bin
-ENV PATH=/home/node/.opencode/bin:/home/node/.local/bin:$PATH
-ENV BUN_INSTALL=/home/node/.bun
-RUN npm set prefix /home/node/
-RUN npm install -g npm
-RUN npm install -g bun
-RUN npm install -g @ai-sdk/openai-compatible
-RUN npm install -g opencode-ai
-RUN npm install -g --ignore-scripts @earendil-works/pi-coding-agent
-RUN npm install -g --ignore-scripts fd
-RUN pi install npm:pi-llama-cpp
-RUN opencode run "dummy"
-
 USER root
 RUN curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/trusted.gpg.d/docker.asc && \
     echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/trusted.gpg.d/docker.asc] https://download.docker.com/linux/ubuntu jammy stable" > /etc/apt/sources.list.d/docker.list && \
@@ -90,20 +72,52 @@ RUN curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /
       docker-compose-plugin \
       docker-buildx-plugin \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Set up non-root user
+USER node
+
+ARG CACHEBUST=1
+
+# opencode
+WORKDIR /home/node
+ENV NPM_CONFIG_PREFIX=/home/node/.npm-global
+ENV PATH=$PATH:/home/node/.npm-global/bin
+ENV PATH=/home/node/.opencode/bin:/home/node/.local/bin:$PATH
+ENV BUN_INSTALL=/home/node/.bun
+RUN npm set prefix /home/node/
+RUN npm install -g npm
+RUN npm install -g bun
+RUN npm install -g @ai-sdk/openai-compatible
+RUN npm install -g opencode-ai
+RUN opencode run "dummy"
+
+# pi.dev
+WORKDIR /home/node
+ENV PI_CODING_AGENT_DIR=/home/node/.pi
+ENV LEMONADE_URL=http://[::1]:13305
+RUN npm install -g --ignore-scripts @earendil-works/pi-coding-agent
+RUN npm install -g --ignore-scripts @earendil-works/pi-agent-core
+RUN npm install -g --ignore-scripts @earendil-works/pi-ai
+RUN npm install -g --ignore-scripts @earendil-works/pi-tui
+RUN pi install npm:fd
+RUN pi install npm:pi-llama-cpp
+RUN pi install git:github.com/lemonade-sdk/lemonade-pi-plugin@main
+COPY pi_settings.json /home/node/.pi/settings.json
+COPY pi_auth.json /home/node/.pi/auth.json
+
+USER root
 RUN rm -rf /tmp/* /tmp/.*.so
 RUN mkdir -p /workspace
 RUN mkdir -p /workdir
 RUN mkdir -p /opt/rocm
 COPY aicli.pl /
 COPY config.json /home/node/config.json
-COPY pi.dev.jsonc /workspace/.pi/pi.dev.jsonc
 COPY skills /skills/
 
 USER root
 ENV PATH=/home/node/.opencode/bin:/home/node/.local/bin:$PATH
 ENV OPENCODE_CONFIG=/home/node/config.json
 ENV OPENCODE_CONFIG_DIR=/workspace
-ENV PI_CODING_AGENT_DIR=/workspace/.pi
 ENV T_UID=1000
 ENV EDITOR=nano
 ENV VISUAL=nano

@@ -226,9 +226,6 @@ $ENV{XDG_CACHE_HOME} = "$workspace/.cache";
 $ENV{PROMPT_COMMAND} = 'history -a';
 $ENV{HISTFILE} = $history_path;
 
-# Set HOME environment variable for node user
-$ENV{HOME} = $workspace;
-$ENV{LOGNAME} = "node";
 
 # $ENV{BDIR} was mounted on /workdir/$BDIR
 if($ENV{BDIR}){
@@ -242,11 +239,17 @@ if($ENV{BDIR}){
 # If first argument is 'pi', run pi-coding-agent instead
 if (@ARGV && $ARGV[0] eq "-pi") {
     # Remove the 'pi' command from arguments and pass rest to pi binary
+    # Set HOME environment variable for node user
+    $ENV{HOME} = $workspace;
+    $ENV{LOGNAME} = "node";
     shift @ARGV;
     exec("/home/node/.npm-global/bin/pi", @ARGV)
         or die "[ERROR] failed to exec pi: $!\n";
 }
 # Otherwise, run opencode CLI with all provided arguments
+# Set HOME environment variable for node user
+$ENV{HOME} = $workspace;
+$ENV{LOGNAME} = "node";
 @ARGV && $ARGV[0] eq "-opencode" && shift @ARGV;
 exec("/home/node/.npm-global/bin/opencode", @ARGV)
     or die "[ERROR] failed to exec: $!\n";

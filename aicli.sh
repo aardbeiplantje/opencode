@@ -82,7 +82,8 @@ exec docker run --rm -it \
     ${d_host:+-e DOCKER_HOST=$d_host} \
     ${c_address:+-e CONTAINERD_ADDRESS=$c_address} \
     -e GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=no" \
-    -e LLAMA_SERVER_URL=${LLAMA_SERVER_URL:-http://[::]:4000/v1} \
+    -e LLAMA_SERVER_URL=${LLAMA_SERVER_URL:-http://[::1]:4000/v1} \
+    -e LEMONADE_URL=${LEMONADE_URL:-http://[::1]:13305/api/v1} \
     -e LLAMA_SERVER_API_KEY \
     -e LLAMA_MODEL=${LLAMA_MODEL:-qwen3.5:0.8b} \
     -e GIT_AUTHOR_NAME \
