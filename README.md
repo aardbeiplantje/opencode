@@ -5,56 +5,54 @@ AI-powered CLI tool packaged as a Docker image with Docker-in-Docker support for
 ## Quick Start
 
 ```bash
-docker run --rm -it \
-  --privileged \
-  -v /var/run/docker.sock:/var/run/docker.sock \
-  ghcr.io/your-org/opencode:latest
+bash aicli.sh
 ```
 
-Or with Compose (recommended):
+Or run with a specific subcommand:
 
-```yaml
-services:
-  opencode:
-    image: "${COMPOSE_PROJECT_NAME:-dev}-opencode"
-    build: .
-    environment:
-      - DOCKER_HOST=unix:///var/run/docker.sock
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-    ports: [3254]
+```bash
+bash aicli.sh -opencode          # run opencode CLI
+bash aicli.sh -pi                # run pi-coding-agent
 ```
-
-Run with `make run`.
 
 ## Configuration
 
-Create a `.env` file (or source env vars before running):
+Set environment variables before running `aicli.sh`:
 
-| Variable               | Default          | Description                        |
-|------------------------|------------------|------------------------------------|
-| OPENAI_API_KEY         | —                | LLM provider key                   |
-| DIND                   | 1                | Set to `0` to disable Docker-in-Docker |
-| LLAMA_MODEL            | qwen2.5-coder-7b  | If using llama.cpp                 |
-
-Environment variables are defined in `.env` or the compose file and sourced by `make`.
+| Variable                   | Default                                      | Description                              |
+|----------------------------|----------------------------------------------|------------------------------------------|
+| OPENAI_API_KEY             | —                                            | LLM provider key                         |
+| DIND                       | 1                                            | Set to `0` to disable Docker-in-Docker   |
+| LLAMA_MODEL                | qwen3.5:0.8b                                 | Model name (for llama.cpp)               |
+| LLAMA_SERVER_URL           | http://[::]:4000/v1                          | LLM server base URL                      |
+| LLAMA_SERVER_API_KEY       | —                                            | LLM server API key                       |
+| DOCKER_HOST                | —                                            | Docker daemon socket (set for non-DIND)  |
+| CONTAINERD_ADDRESS         | —                                            | Containerd socket path                   |
+| ROCM_PATH                  | ~/therock-dist-linux-gfx1151-latest          | AMD ROCm runtime path                    |
+| DOCKER_IMAGE               | local/ai/opencode:latest                     | Docker image to run                      |
 
 ## Features
 
 - **Docker-in-Docker** — Start a local dockerd with `DIND=1` (default) to manage containers from within your session
-- **GPU support** — NVIDIA CUDA runtime (`DIND=0`) and AMD ROCm (`DIND=0`) builds included
+- **GPU support** — NVIDIA CUDA runtime (`--device /dev/kfd`, `/dev/dri`) and AMD ROCm (`ROCM_PATH` bind mount)
 - **Privilege dropping** — Automatic root → non-root user switching before running the agent
+- **Shared host context** — Docker socket, SSH agent, gitconfig, `.docker` config, X11 display
 
 ## Build
 
 ```bash
-# Image for current platform with DOCKER_HOST configuration
-make image IMAGE_TAG=edge DEV_REGISTRY=localhost:5555
+# Local build for current platform
+docker buildx bake -f docker-bake.hcl --no-cache
 
-# Multi-platform push to a registry using Docker bake (HCL)
-IMAGE_TAG=1.0 make all-push REGISTRY=ghcr.io NAMESPACE=my-org IMAGE_NAME=opencode
+# Multi-platform push to a registry
+docker buildx bake -f docker-bake.hcl release --set "*.tags=ghcr.io/my-org/opencode:1.0"
+```
+
+Customize bake variables by passing `--set`, e.g.:
+```bash
+docker buildx bake -f docker-bake.hcl release --set "*.DOCKER_REGISTRY=ghcr.io" --set "*.DOCKER_REPOSITORY=my-org" --set "*.DOCKER_IMAGE_NAME=opencode" --set "*.DOCKER_TAG=1.0"
 ```
 
 ## License
 
-Apache-2.0 — see LICENSE.
+Unlicense (public domain) — see LICENSE.
