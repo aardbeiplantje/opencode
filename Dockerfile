@@ -121,6 +121,24 @@ RUN pi install npm:@0xkobold/pi-codebase-wiki
 COPY pi_settings.json $HDIR/.pi/settings.json
 COPY pi_auth.json $HDIR/.pi/auth.json
 
+# cocoindex
+USER root
+ENV TMPDIR=/pip/tmp
+ENV XDG_CACHE_HOME=/pip
+ENV PIP_BREAK_SYSTEM_PACKAGES=1
+ENV PIP_ROOT_USER_ACTION=ignore
+ENV COCOINDEX_CODE_DIR=$HDIR/.cocoindex
+ENV COCOINDEX_CODE_DB_PATH_MAPPING=/workdir=/coco-db-files
+ENV COCOINDEX_DISABLE_USAGE_TRACKING=1
+RUN mkdir -p $HDIR/.cocoindex/ && chown node:node $HDIR/.cocoindex
+VOLUME $HDIR/.cocoindex
+
+RUN mkdir -p $TMPDIR && chmod +s $TMPDIR
+RUN \
+    --mount=target=/pip,type=cache,sharing=locked \
+    python3 -m pip install --prefer-binary --upgrade \
+        cocoindex-code
+COPY cocoindex.yml $COCOINDEX_CODE_DIR/global_settings.yml
 
 USER root
 RUN mkdir -p /workspace/.local
