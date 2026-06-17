@@ -1,0 +1,4 @@
+{
+    "additionalInclude": ["**/*.m"],
+    "embeddingProvider": "ollama"
+}

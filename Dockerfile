@@ -84,6 +84,7 @@ ENV PATH=$HDIR/.opencode/bin:$HDIR/.local/bin:$PATH
 ENV OPENCODE_CONFIG_DIR=$HDIR/.config/opencode
 ENV OPENCODE_CONFIG=$OPENCODE_CONFIG_DIR/opencode.json
 COPY --chown=node:node config.json $OPENCODE_CONFIG
+COPY --chown=node:node codebase-index.json $OPENCODE_CONFIG_DIR/
 
 # opencode
 ENV NPM_CONFIG_PREFIX=$HDIR/.npm-global

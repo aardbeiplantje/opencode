@@ -248,6 +248,7 @@ if (@ARGV && $ARGV[0] eq "-pi") {
 }
 # Otherwise, run opencode CLI with all provided arguments
 # Set HOME environment variable for node user
+$ENV{OPENCODE_EXPERIMENTAL_DISABLE_COPY_ON_SELECT} = "true";
 $ENV{HOME} = $workspace;
 $ENV{LOGNAME} = "node";
 @ARGV && $ARGV[0] eq "-opencode" && shift @ARGV;

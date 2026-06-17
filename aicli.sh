@@ -10,11 +10,6 @@ w=${1:--opencode}
 shift
 echo "running $w"
 
-# opencode config specified?
-if [ ! -z "${OPENCODE_CONFIG}" -a -f "${OPENCODE_CONFIG}" ]; then
-    extra_opts="-v ${OPENCODE_CONFIG}:${OPENCODE_CONFIG}:ro -e OPENCODE_CONFIG=$OPENCODE_CONFIG"
-fi
-
 # share ssh keys (dangerous)
 if [ ! -z "$SSH_AUTH_SOCK" ]; then
     b_sock=$(readlink -f "$SSH_AUTH_SOCK")
@@ -92,7 +87,6 @@ exec docker run --rm -it \
     -e GIT_COMITTER_EMAIL \
     -e GIT_EDITOR="true" \
     -e ROCM_PATH=/opt/rocm \
-    -e OPENCODE_EXPERIMENTAL_DISABLE_COPY_ON_SELECT=true \
     -e DISPLAY \
     -v /tmp/.X11-unix:/tmp/.X11-unix:ro \
     -v $ROCM_PATH:/opt/rocm:ro \
