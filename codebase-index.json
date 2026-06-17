@@ -18,7 +18,7 @@
     "timeoutMs": 30000,
     "maxBatchSize": 64,
     "concurrency": 3,
-    "model": "embed-gemma-300m-FLM"
+    "model": "embeddinggemma-300m-GGUF-Q8_0"
   },
   "indexing": {
     "requireProjectMarker": false,
