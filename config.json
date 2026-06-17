@@ -27,24 +27,23 @@
   },
   "model": "llama.cpp/{env:LLAMA_MODEL}",
   "permission": {
-      "edit": "allow",
-      "bash": "allow"
+    "edit": "allow",
+    "bash": "allow"
   },
-  "plugin": [[
-      "opencode-codebase-index",
-      {
-          "embeddingProvider": "ollama",
-          "provider": "llama.cpp",
-          "baseURL": "{env:LLAMA_SERVER_URL}",
-          "apiKey": "{env:LLAMA_SERVER_API_KEY}",
-          "model": "embed-gemma:300m"
-      }
-  ]],
+  "plugin": [
+    "opencode-codebase-index"
+  ],
   "compaction": {
     "auto": true,
     "threshold": 0.75,
     "strategy": "summarize",
     "preserveRecentMessages": 6,
     "preserveSystemPrompt": true
+  },
+  "mcp": {
+    "codebase-index": {
+      "enabled": true,
+      "command": ["npx", "opencode-codebase-index-mcp", "--project", "/workdir/{env:BDIR}"]
+    }
   }
 }

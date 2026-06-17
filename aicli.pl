@@ -240,7 +240,7 @@ if($ENV{BDIR}){
 if (@ARGV && $ARGV[0] eq "-pi") {
     # Remove the 'pi' command from arguments and pass rest to pi binary
     # Set HOME environment variable for node user
-    $ENV{HOME} = $workspace;
+    $ENV{HOME} = "/home/node";
     $ENV{LOGNAME} = "node";
     shift @ARGV;
     exec("/home/node/.npm-global/bin/pi", @ARGV)
@@ -249,7 +249,7 @@ if (@ARGV && $ARGV[0] eq "-pi") {
 # Otherwise, run opencode CLI with all provided arguments
 # Set HOME environment variable for node user
 $ENV{OPENCODE_EXPERIMENTAL_DISABLE_COPY_ON_SELECT} = "true";
-$ENV{HOME} = $workspace;
+$ENV{HOME} = "/home/node";
 $ENV{LOGNAME} = "node";
 @ARGV && $ARGV[0] eq "-opencode" && shift @ARGV;
 exec("/home/node/.npm-global/bin/opencode", @ARGV)
