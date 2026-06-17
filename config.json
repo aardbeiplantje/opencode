@@ -30,9 +30,16 @@
       "edit": "allow",
       "bash": "allow"
   },
-  "plugin": [
-      "opencode-codebase-index"
-  ],
+  "plugin": [[
+      "opencode-codebase-index",
+      {
+          "embeddingProvider": "ollama",
+          "provider": "llama.cpp",
+          "baseURL": "{env:LLAMA_SERVER_URL}",
+          "apiKey": "{env:LLAMA_SERVER_API_KEY}",
+          "model": "embed-gemma:300m"
+      }
+  ]],
   "compaction": {
     "auto": true,
     "threshold": 0.75,
