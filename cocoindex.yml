@@ -1,10 +1,10 @@
 embedding:
-  model: embeddinggemma-300m-GGUF-Q8_0
+  model: openai/embeddinggemma-300m-GGUF-Q8_0
   min_interval_ms: 300
   indexing_params:
     input_type: search_document
   query_params:
     input_type: search_query
-  envs:
-    OPENAI_BASE_URL: http://[2a02:a03f:8789:e700::20]:13305/api/v1
-    OPENAI_API_KEY: nokeyneeded
+envs:
+  OPENAI_BASE_URL: http://[2a02:a03f:8789:e700::20]:13305/api/v1
+  OPENAI_API_KEY: nokeyneeded
