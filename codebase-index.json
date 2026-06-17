@@ -21,6 +21,7 @@
     "model": "embeddinggemma-300m-GGUF-Q8_0"
   },
   "indexing": {
+    "autoIndex": false,
     "requireProjectMarker": false,
     "autoGc": true
   },
