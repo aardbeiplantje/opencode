@@ -228,12 +228,6 @@ $ENV{HISTFILE} = $history_path;
 $ENV{HOME} = "/home/node";
 $ENV{LOGNAME} = "node";
 
-print "LS \$HOME\n";
-system("ls -la $ENV{HOME}") == 0 or die;
-print "LS ~/\n";
-system("ls -la ~/") == 0 or die;
-
-
 # $ENV{BDIR} was mounted on /workdir/$BDIR
 if($ENV{BDIR}){
     chdir("/workdir/$ENV{BDIR}")
