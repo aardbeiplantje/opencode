@@ -12,61 +12,61 @@ server = Server("ccc-granular")
 async def handle_list_tools() -> list[types.Tool]:
     return [
         types.Tool(
-            name="ccc_init",
-            description="Initialize a project for cocoindex-code",
+            name="ccc_init_project",
+            description="Initialize a new project for CocoIndex codebase indexing",
             inputSchema={
                 "type": "object",
                 "properties": {},
             },
         ),
         types.Tool(
-            name="ccc_index",
-            description="Create/update index for the codebase",
+            name="ccc_index_codebase",
+            description="Index the source code to enable semantic search",
             inputSchema={
                 "type": "object",
                 "properties": {},
             },
         ),
         types.Tool(
-            name="ccc_search",
-            description="Semantic search across the codebase",
+            name="ccc_semantic_search",
+            description="Search the codebase using semantic similarity (best for finding code by meaning)",
             inputSchema={
                 "type": "object",
                 "properties": {
-                    "query": {"type": "string", "description": "The search query"},
+                    "query": {"type": "string", "description": "The semantic search query"},
                 },
                 "required": ["query"],
             },
         ),
         types.Tool(
-            name="ccc_status",
-            description="Show project status",
+            name="ccc_get_index_status",
+            description="Get the current status and statistics of the codebase index",
             inputSchema={
                 "type": "object",
                 "properties": {},
             },
         ),
         types.Tool(
-            name="ccc_reset",
-            description="Reset project databases and optionally remove settings",
+            name="ccc_reset_index",
+            description="Reset the codebase index and all its databases",
             inputSchema={
                 "type": "object",
                 "properties": {
-                    "force": {"type": "boolean", "description": "Force reset"},
+                    "force": {"type": "boolean", "description": "Force the reset"},
                 },
             },
         ),
         types.Tool(
-            name="ccc_doctor",
-            description="Check system health and report issues",
+            name="ccc_check_system_health",
+            description="Check the health and diagnostic status of the CocoIndex system",
             inputSchema={
                 "type": "object",
                 "properties": {},
             },
         ),
         types.Tool(
-            name="ccc_daemon_restart",
-            description="Restart the ccc daemon",
+            name="ccc_restart_daemon",
+            description="Restart the CocoIndex daemon",
             inputSchema={
                 "type": "object",
                 "properties": {},
@@ -78,23 +78,23 @@ async def handle_list_tools() -> list[types.Tool]:
 async def handle_call_tool(
     name: str, arguments: dict | None
 ) -> list[types.TextContent | types.ImageContent | types.EmbeddedResource]:
-    if name == "ccc_init":
+    if name == "ccc_init_project":
         cmd = ["ccc", "init"]
-    elif name == "ccc_index":
+    elif name == "ccc_index_codebase":
         cmd = ["ccc", "index"]
-    elif name == "ccc_search":
+    elif name == "ccc_semantic_search":
         if not arguments or "query" not in arguments:
             raise ValueError("Missing 'query' argument")
         cmd = ["ccc", "search", arguments["query"]]
-    elif name == "ccc_status":
+    elif name == "ccc_get_index_status":
         cmd = ["ccc", "status"]
-    elif name == "ccc_reset":
+    elif name == "ccc_reset_index":
         cmd = ["ccc", "reset"]
         if arguments and arguments.get("force"):
             cmd.append("-f")
-    elif name == "ccc_doctor":
+    elif name == "ccc_check_system_health":
         cmd = ["ccc", "doctor"]
-    elif name == "ccc_daemon_restart":
+    elif name == "ccc_restart_daemon":
         cmd = ["ccc", "daemon", "restart"]
     else:
         raise ValueError(f"Unknown tool: {name}")

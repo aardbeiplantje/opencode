@@ -45,6 +45,11 @@
       "type": "local",
       "enabled": true,
       "command": ["python3", "/home/node/mcp_servers/ccc_granular/server.py"]
+    },
+    "cocoindex-code": {
+      "type": "local",
+      "enabled": true,
+      "command": ["ccc", "mcp"]
     }
   }
 }
