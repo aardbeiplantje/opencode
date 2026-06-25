@@ -103,6 +103,7 @@ RUN npm install -g bun
 RUN npm install -g @ai-sdk/openai-compatible
 RUN npm install -g opencode-ai
 RUN npm install -g opencode-codebase-index
+RUN npm install -g opencode-working-memory
 RUN npm install -g @modelcontextprotocol/sdk zod
 RUN opencode plugin @tarquinen/opencode-dcp@latest --global
 RUN chmod +x $HDIR/.npm-global/bin/*
@@ -121,6 +122,7 @@ RUN pi install npm:pi-memctx
 RUN pi install npm:@0xkobold/pi-codebase-wiki
 COPY pi_settings.json $HDIR/.pi/settings.json
 COPY pi_auth.json $HDIR/.pi/auth.json
+COPY tui.json $HDIR/.pi/tui.json
 
 # cocoindex
 USER root
