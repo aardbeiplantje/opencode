@@ -105,6 +105,8 @@ RUN npm install -g opencode-ai
 RUN npm install -g opencode-codebase-index
 RUN npm install -g opencode-working-memory
 RUN npm install -g @modelcontextprotocol/sdk zod
+RUN npm install -g opencode-plugin-openspec
+RUN npm install -g opencode-mem
 RUN opencode plugin @tarquinen/opencode-dcp@latest --global
 RUN chmod +x $HDIR/.npm-global/bin/*
 COPY tui.json $OPENCODE_CONFIG_DIR/tui.json

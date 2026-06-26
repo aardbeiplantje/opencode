@@ -30,10 +30,12 @@
     "edit": "allow",
     "bash": "allow"
   },
-  "plugin": [
+"plugin": [
     "opencode-codebase-index",
-    "opencode-working-memory"
-  ],
+    "opencode-working-memory",
+    "opencode-plugin-openspec",
+    "opencode-mem"
+],
   "compaction": {
     "auto": true,
     "threshold": 0.75,
