@@ -80,6 +80,7 @@ RUN curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /
       glslc \
       vulkan-tools \
       libvulkan-dev \
+      spirv-headers \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 USER root
