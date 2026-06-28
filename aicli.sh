@@ -73,6 +73,7 @@ exec docker run --rm -it \
     -e NODE_OPTIONS="--max-old-space-size=4096" \
     -e UID=${EUID} \
     -e LOGNAME \
+    -e DOCKER_CONFIG=/workspace/.docker \
     -e BDIR="${BDIR}" \
     ${d_host:+-e DOCKER_HOST=$d_host} \
     ${c_address:+-e CONTAINERD_ADDRESS=$c_address} \
