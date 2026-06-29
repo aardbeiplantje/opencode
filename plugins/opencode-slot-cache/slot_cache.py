@@ -37,14 +37,14 @@ def save_slot(server_url, slot_id, cache_name, cache_dir, model=None):
     return True
 
 
-def restore_slot(server_url, slot_id, cache_name, cache_dir):
+def restore_slot(server_url, slot_id, cache_name, cache_dir, model=None):
     """Restore slot KV cache by POSTing to llama.cpp server."""
     # Check if cache exists
     if not _check_meta_exists(cache_dir):
         return False
 
     cache_file = f"{cache_name}.kv"
-    payload = {"filename": cache_file, "model": ""}
+    payload = {"filename": cache_file, "model": model or ""}
 
     try:
         url = f"{server_url}/slots/{slot_id}?action=restore"
@@ -97,11 +97,12 @@ def main():
     parser.add_argument("slot_id", type=int, help="Slot ID to manage")
     parser.add_argument("cache_name", help="Cache name (namespaced, e.g. user@dir)")
     parser.add_argument("cache_dir", help="Directory for cache metadata files")
+    parser.add_argument("--model", default=None, help="Model name (optional, defaults to server's active model)")
     args = parser.parse_args()
 
     try:
         if args.command == "save":
-            save_slot(args.server_url, args.slot_id, args.cache_name, args.cache_dir)
+            save_slot(args.server_url, args.slot_id, args.cache_name, args.cache_dir, model=args.model)
         elif args.command == "restore":
             sys.exit(0 if restore_slot(args.server_url, args.slot_id, args.cache_name, args.cache_dir) else 1)
         elif args.command == "check":

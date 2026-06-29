@@ -21,6 +21,7 @@ export const SlotCachePlugin = async ({ project, directory, $, dispose, client }
   const SAVE_INTERVAL_MS = parseInt(process.env.SLOT_SAVE_INTERVAL_MS || '300000', 10)
   const CACHE_BASE_DIR = project ? directory : process.env.HOME || '/home/node'
   const SLOT_CACHE_DIR = `${CACHE_BASE_DIR}/.cache/llama-slots`
+  const MODEL_NAME = process.env.LLAMA_MODEL || ''
 
   function makeCacheName() {
     if (!directory) return `${USER}@root`
@@ -34,9 +35,9 @@ export const SlotCachePlugin = async ({ project, directory, $, dispose, client }
 
   // Restore slot cache on plugin init (session start)
   try {
-    const { exitCode } = await $`python3 ${PYTHON_SCRIPT} check ${LLAMA_SERVER_URL} ${SLOT_ID} ${cacheName} ${SLOT_CACHE_DIR}`
+    const { exitCode } =      await $`python3 ${PYTHON_SCRIPT} check ${LLAMA_SERVER_URL} ${SLOT_ID} ${cacheName} ${SLOT_CACHE_DIR} --model ${MODEL_NAME}`
     if (exitCode === 0) {
-      await $`python3 ${PYTHON_SCRIPT} restore ${LLAMA_SERVER_URL} ${SLOT_ID} ${cacheName} ${SLOT_CACHE_DIR}`
+      await $`python3 ${PYTHON_SCRIPT} restore ${LLAMA_SERVER_URL} ${SLOT_ID} ${cacheName} ${SLOT_CACHE_DIR} --model ${MODEL_NAME}`
       console.log(`[slot-cache] restored slot ${SLOT_ID} from cache "${cacheName}"`)
     }
   } catch (e) {
@@ -47,7 +48,7 @@ export const SlotCachePlugin = async ({ project, directory, $, dispose, client }
   let idleTimerId = null
   async function periodicSave() {
     try {
-      await $`python3 ${PYTHON_SCRIPT} save ${LLAMA_SERVER_URL} ${SLOT_ID} ${cacheName} ${SLOT_CACHE_DIR}`
+      await $`python3 ${PYTHON_SCRIPT} save ${LLAMA_SERVER_URL} ${SLOT_ID} ${cacheName} ${SLOT_CACHE_DIR} --model ${MODEL_NAME}`
       console.log(`[slot-cache] saved slot ${SLOT_ID} (interval save)`)
     } catch (e) {
       console.log(`[slot-cache] periodic save failed: ${e.message}`)
@@ -63,7 +64,7 @@ export const SlotCachePlugin = async ({ project, directory, $, dispose, client }
         idleTimerId = null
       }
       try {
-        await $`python3 ${PYTHON_SCRIPT} save ${LLAMA_SERVER_URL} ${SLOT_ID} ${cacheName} ${SLOT_CACHE_DIR}`
+        await $`python3 ${PYTHON_SCRIPT} save ${LLAMA_SERVER_URL} ${SLOT_ID} ${cacheName} ${SLOT_CACHE_DIR} --model ${MODEL_NAME}`
         console.log(`[slot-cache] saved slot ${SLOT_ID} on exit`)
       } catch (e) {
         console.log(`[slot-cache] exit save failed: ${e.message}`)
@@ -76,7 +77,7 @@ export const SlotCachePlugin = async ({ project, directory, $, dispose, client }
     event: async ({ event }) => {
       if (event === 'session.compacted') {
         try {
-          await $`python3 ${PYTHON_SCRIPT} save ${LLAMA_SERVER_URL} ${SLOT_ID} ${cacheName} ${SLOT_CACHE_DIR}`
+          await $`python3 ${PYTHON_SCRIPT} save ${LLAMA_SERVER_URL} ${SLOT_ID} ${cacheName} ${SLOT_CACHE_DIR} --model ${MODEL_NAME}`
           console.log(`[slot-cache] saved slot ${SLOT_ID} on compaction`)
         } catch (e) {
           console.log(`[slot-cache] compaction save failed: ${e.message}`)
@@ -87,7 +88,7 @@ export const SlotCachePlugin = async ({ project, directory, $, dispose, client }
     // Inject id_slot into chat requests to use the cached slot
     'chat.params': async (input, output) => {
       try {
-        const { exitCode } = await $`python3 ${PYTHON_SCRIPT} check ${LLAMA_SERVER_URL} ${SLOT_ID} ${cacheName} ${SLOT_CACHE_DIR}`
+        const { exitCode } = await $`python3 ${PYTHON_SCRIPT} check ${LLAMA_SERVER_URL} ${SLOT_ID} ${cacheName} ${SLOT_CACHE_DIR} --model ${MODEL_NAME}`
         if (exitCode === 0 && input && input.model) {
           if (!input.model.extraBody) input.model.extraBody = {}
           input.model.extraBody.id_slot = SLOT_ID
