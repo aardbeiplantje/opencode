@@ -5,6 +5,8 @@
 /.cocoindex_code/
 # Python build artifacts
 **/__pycache__/
+# Slot cache metadata
+.cache/llama-slots/
 **/*.egg-info/
 **/*.egg
 **/*.pyc

@@ -34,26 +34,43 @@ export const SlotCachePlugin = async ({ project, directory, $, dispose, client }
   }
 
   const cacheName = makeCacheName()
+  let slotApiAvailable = true
+
+  function slotApiUnav() {
+    if (slotApiAvailable) {
+      slotApiAvailable = false
+      console.log(`[slot-cache] slots API unavailable on ${LLAMA_SERVER_URL} — KV cache persistence disabled`)
+      if (idleTimerId) {
+        clearInterval(idleTimerId)
+        idleTimerId = null
+      }
+    }
+  }
 
   // Restore slot cache on plugin init (session start)
-  try {
-    const { exitCode } =      await $`python3 ${PYTHON_SCRIPT} check ${LLAMA_SERVER_URL} ${SLOT_ID} ${cacheName} ${SLOT_CACHE_DIR} --model ${MODEL_NAME}`
-    if (exitCode === 0) {
-      await $`python3 ${PYTHON_SCRIPT} restore ${LLAMA_SERVER_URL} ${SLOT_ID} ${cacheName} ${SLOT_CACHE_DIR} --model ${MODEL_NAME}`
-      console.log(`[slot-cache] restored slot ${SLOT_ID} from cache "${cacheName}"`)
+  if (slotApiAvailable) {
+    try {
+      const { exitCode } = await $`python3 ${PYTHON_SCRIPT} check ${LLAMA_SERVER_URL} ${SLOT_ID} ${cacheName} ${SLOT_CACHE_DIR} --model ${MODEL_NAME}`
+      if (exitCode === 0) {
+        await $`python3 ${PYTHON_SCRIPT} restore ${LLAMA_SERVER_URL} ${SLOT_ID} ${cacheName} ${SLOT_CACHE_DIR} --model ${MODEL_NAME}`
+        console.log(`[slot-cache] restored slot ${SLOT_ID} from cache "${cacheName}"`)
+      } else {
+        slotApiUnav()
+      }
+    } catch (e) {
+      slotApiUnav()
     }
-  } catch (e) {
-    console.log(`[slot-cache] restore check failed (continuing without cache): ${e.message}`)
   }
 
   // Periodic idle save timer
   let idleTimerId = null
   async function periodicSave() {
+    if (!slotApiAvailable) return
     try {
       await $`python3 ${PYTHON_SCRIPT} save ${LLAMA_SERVER_URL} ${SLOT_ID} ${cacheName} ${SLOT_CACHE_DIR} --model ${MODEL_NAME}`
       console.log(`[slot-cache] saved slot ${SLOT_ID} (interval save)`)
     } catch (e) {
-      console.log(`[slot-cache] periodic save failed: ${e.message}`)
+      slotApiUnav()
     }
   }
   idleTimerId = setInterval(periodicSave, SAVE_INTERVAL_MS)
@@ -65,11 +82,13 @@ export const SlotCachePlugin = async ({ project, directory, $, dispose, client }
         clearInterval(idleTimerId)
         idleTimerId = null
       }
-      try {
-        await $`python3 ${PYTHON_SCRIPT} save ${LLAMA_SERVER_URL} ${SLOT_ID} ${cacheName} ${SLOT_CACHE_DIR} --model ${MODEL_NAME}`
-        console.log(`[slot-cache] saved slot ${SLOT_ID} on exit`)
-      } catch (e) {
-        console.log(`[slot-cache] exit save failed: ${e.message}`)
+      if (slotApiAvailable) {
+        try {
+          await $`python3 ${PYTHON_SCRIPT} save ${LLAMA_SERVER_URL} ${SLOT_ID} ${cacheName} ${SLOT_CACHE_DIR} --model ${MODEL_NAME}`
+          console.log(`[slot-cache] saved slot ${SLOT_ID} on exit`)
+        } catch (e) {
+          slotApiUnav()
+        }
       }
     })
   }
@@ -78,25 +97,29 @@ export const SlotCachePlugin = async ({ project, directory, $, dispose, client }
     // Subscribe to compaction event - save slot on compaction
     event: async ({ event }) => {
       if (event === 'session.compacted') {
+        if (!slotApiAvailable) return
         try {
           await $`python3 ${PYTHON_SCRIPT} save ${LLAMA_SERVER_URL} ${SLOT_ID} ${cacheName} ${SLOT_CACHE_DIR} --model ${MODEL_NAME}`
           console.log(`[slot-cache] saved slot ${SLOT_ID} on compaction`)
         } catch (e) {
-          console.log(`[slot-cache] compaction save failed: ${e.message}`)
+          slotApiUnav()
         }
       }
     },
 
     // Inject id_slot into chat requests to use the cached slot
     'chat.params': async (input, output) => {
+      if (!slotApiAvailable) return
       try {
         const { exitCode } = await $`python3 ${PYTHON_SCRIPT} check ${LLAMA_SERVER_URL} ${SLOT_ID} ${cacheName} ${SLOT_CACHE_DIR} --model ${MODEL_NAME}`
         if (exitCode === 0 && input && input.model) {
           if (!input.model.extraBody) input.model.extraBody = {}
           input.model.extraBody.id_slot = SLOT_ID
+        } else {
+          slotApiUnav()
         }
       } catch {
-        // Best effort - don't fail if check fails
+        slotApiUnav()
       }
     }
   }

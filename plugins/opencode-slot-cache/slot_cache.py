@@ -29,11 +29,24 @@ def save_slot(server_url, slot_id, cache_name, cache_dir, model=None):
 
     # Try POST /slots/{id}?action=save
     url = f"{server_url}/slots/{slot_id}?action=save"
-    resp = httpx.post(url, json=payload, timeout=30)
-    resp.raise_for_status()
+    try:
+        resp = httpx.post(url, json=payload, timeout=30)
+        resp.raise_for_status()
+    except httpx.HTTPStatusError as e:
+        # 404 means /slots endpoint doesn't exist (LiteLLM, LocalAI, etc.)
+        # Persist incompatibility so future checks fail fast without hitting the server
+        if e.response.status_code == 404:
+            _update_meta(cache_dir, {
+                "action": "unavailable",
+                "server": server_url,
+                "reason": "slots API not supported",
+                "time": time.time()
+            })
+            return False
+        raise
 
     # Update metadata
-    _update_meta(cache_dir, {"action": "save", "slot": slot_id, "file": cache_file, "time": time.time()})
+    _update_meta(cache_dir, {"action": "save", "slot": slot_id, "file": cache_file, "server": server_url, "time": time.time()})
     return True
 
 
@@ -56,8 +69,41 @@ def restore_slot(server_url, slot_id, cache_name, cache_dir, model=None):
         return False
 
 
-def check_cache(cache_name, cache_dir):
-    """Check if cache metadata exists and is recent (< 24 hours)."""
+def _check_meta_available(cache_dir, server_url=None):
+    """Check if meta marks slots API as unavailable for this server.
+    
+    Returns True if compatible or unknown, False if server is known incompatible.
+    """
+    meta = Path(cache_dir) / ".slot-cache-meta.jsonl"
+    if not meta.exists():
+        return True
+    
+    try:
+        with open(meta) as f:
+            lines = f.readlines()
+            if lines:
+                last = json.loads(lines[-1])
+                # If this server is explicitly marked incompatible, skip
+                if last.get("action") == "unavailable":
+                    # If the server URL matches, honor the incompatibility
+                    if server_url and last.get("server") == server_url:
+                        return False
+                    # If server URL changed, don't invalidate - just don't use cache
+                    # (the server may have slots API now)
+                    return True
+        return True
+    except (json.JSONDecodeError, IOError, KeyError):
+        return True
+
+
+def check_cache(cache_name, cache_dir, server_url=None):
+    """Check if slot cache is available.
+    
+    Returns True if local meta exists, server is compatible, and cache is recent (< 24h).
+    Returns False if server is known incompatible (no slots API) or cache is stale.
+    """
+    if not _check_meta_available(cache_dir, server_url):
+        return False
     return _check_meta_exists(cache_dir)
 
 
@@ -106,7 +152,7 @@ def main():
         elif args.command == "restore":
             sys.exit(0 if restore_slot(args.server_url, args.slot_id, args.cache_name, args.cache_dir) else 1)
         elif args.command == "check":
-            sys.exit(0 if check_cache(args.cache_name, args.cache_dir) else 1)
+            sys.exit(0 if check_cache(args.cache_name, args.cache_dir, server_url=args.server_url) else 1)
     except httpx.HTTPStatusError as e:
         print(f"[slot-cache] HTTP error: {e.response.status_code} - {e.response.text}", file=sys.stderr)
         sys.exit(1)
