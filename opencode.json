@@ -53,6 +53,11 @@
       "type": "local",
       "enabled": true,
       "command": ["ccc", "mcp"]
+    },
+    "llama-slot-cache": {
+      "type": "local",
+      "enabled": true,
+      "command": ["python3", "/mcp/llama-slot-cache/server.py"]
     }
   }
 }

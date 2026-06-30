@@ -92,6 +92,7 @@ exec docker run --rm -it \
     -e DISPLAY \
     -v /tmp/.X11-unix:/tmp/.X11-unix:ro \
     -v $ROCM_PATH:/opt/rocm:ro \
+    -v aicli-${w##-}-${LOGNAME}-${BDIR}-cocodb:/coco-db-files:rw \
     --ulimit memlock=-1:-1 \
     --ulimit stack=67108864:67108864 \
     --group-add=video \
@@ -101,6 +102,7 @@ exec docker run --rm -it \
     --group-add 986 \
     --group-add 109 \
     --group-add 992 \
+    --tmpfs /home/node/.cocoindex:rw,suid,exec,uid=1000,size=1M \
     --tmpfs /tmp:rw,suid,exec,size=2G \
     --tmpfs /var/tmp:rw,suid,exec,size=1G \
     --device /dev/kfd \
@@ -108,7 +110,7 @@ exec docker run --rm -it \
     --device /dev/accel \
     --network=host \
     --name ${w##-}-${LOGNAME}-${BDIR} \
-    -v ${w##-}-${LOGNAME}:/workspace \
+    -v aicli-${w##-}-${LOGNAME}-workspace:/workspace \
     -v "${PWD}":/workdir/${BDIR} \
         "$DOCKER_IMAGE" \
             $w $*

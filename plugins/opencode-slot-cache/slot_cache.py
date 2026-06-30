@@ -1,218 +1,160 @@
 #!/usr/bin/env python3
 """
-llama.cpp slot cache manager for OpenCode.
+llama.cpp slot cache manager CLI.
 
-Manages KV cache persistence via llama.cpp server's /slots API.
-Saves slot state to remote server, restores on session start.
-
-Usage:
-    python3 slot_cache.py <command> <server_url> <slot_id> <cache_name> <cache_dir>
-
-Commands:
-    save     - Save slot KV cache to remote server
-    restore  - Restore slot KV cache from remote server
-    check    - Check if a valid cache file exists for this slot
+Wraps slot_cache_lib for command-line usage and MCP server integration.
 """
 import sys
+import argparse
+import json
+import logging
 import os
 import time
-import json
-import argparse
 import httpx
 from pathlib import Path
+from slot_cache_lib import (
+    save_slot, restore_slot, check_cache, verify_api,
+    list_caches, delete_cache, _check_meta_available, _check_meta_exists,
+    set_logger
+)
 
 
-def save_slot(server_url, slot_id, cache_name, cache_dir, model=None):
-    """Save slot KV cache by POSTing to llama.cpp server."""
-    cache_file = f"{cache_name}.kv"
-    payload = {"filename": cache_file, "model": model or ""}
-
-    # Try POST /slots/{id}?action=save
-    url = f"{server_url}/slots/{slot_id}?action=save"
-    try:
-        resp = httpx.post(url, json=payload, timeout=30)
-        resp.raise_for_status()
-    except httpx.HTTPStatusError as e:
-        # 404 means /slots endpoint doesn't exist (LiteLLM, LocalAI, etc.)
-        # Persist incompatibility so future checks fail fast without hitting the server
-        if e.response.status_code == 404:
-            _update_meta(cache_dir, {
-                "action": "unavailable",
-                "server": server_url,
-                "reason": "slots API not supported",
-                "time": time.time()
-            })
-            return False
-        raise
-
-    # Update metadata
-    _update_meta(cache_dir, {"action": "save", "slot": slot_id, "file": cache_file, "server": server_url, "time": time.time()})
-    return True
-
-
-def restore_slot(server_url, slot_id, cache_name, cache_dir, model=None):
-    """Restore slot KV cache by POSTing to llama.cpp server."""
-    # Check if cache exists
-    if not _check_meta_exists(cache_dir):
-        return False
-
-    cache_file = f"{cache_name}.kv"
-    payload = {"filename": cache_file, "model": model or ""}
-
-    try:
-        url = f"{server_url}/slots/{slot_id}?action=restore"
-        resp = httpx.post(url, json=payload, timeout=30)
-        resp.raise_for_status()
-        _update_meta(cache_dir, {"action": "restore", "slot": slot_id, "file": cache_file, "time": time.time()})
-        return True
-    except httpx.HTTPError:
-        return False
-
-
-def _check_meta_available(cache_dir, server_url=None):
-    """Check if meta marks slots API as unavailable for this server.
+def setup_logging():
+    """Set up logging to file only."""
+    logger = logging.getLogger('slot-cache')
+    logger.setLevel(logging.DEBUG)
     
-    Returns True if compatible or unknown, False if server is known incompatible.
-    """
-    meta = Path(cache_dir) / ".slot-cache-meta.jsonl"
-    if not meta.exists():
-        return True
+    # File handler
+    log_dir = Path(os.environ.get('SLOT_CACHE_LOG_DIR', str(Path(__file__).parent)))
+    log_dir.mkdir(parents=True, exist_ok=True)
+    log_file = log_dir / 'slot_cache_cli.log'
     
-    try:
-        with open(meta) as f:
-            lines = f.readlines()
-            if lines:
-                last = json.loads(lines[-1])
-                # If this server is explicitly marked incompatible, skip
-                if last.get("action") == "unavailable":
-                    # If the server URL matches, honor the incompatibility
-                    if server_url and last.get("server") == server_url:
-                        return False
-                    # If server URL changed, don't invalidate - just don't use cache
-                    # (the server may have slots API now)
-                    return True
-        return True
-    except (json.JSONDecodeError, IOError, KeyError):
-        return True
-
-
-def check_cache(cache_name, cache_dir, server_url=None):
-    """Check if slot cache is available.
+    fh = logging.FileHandler(str(log_file), mode='a')
+    fh.setLevel(logging.DEBUG)
+    fh.setFormatter(logging.Formatter('%(asctime)s [slot-cache] [%(levelname)s] %(message)s', datefmt='%Y-%m-%dT%H:%M:%S'))
+    logger.addHandler(fh)
     
-    Returns True if local meta exists, server is compatible, and cache is recent (< 24h).
-    Returns False if server is known incompatible (no slots API).
-    Returns None if no cache but server is compatible (API may work, just no cache yet).
-    """
-    if not _check_meta_available(cache_dir, server_url):
-        return False
-    if not _check_meta_exists(cache_dir):
-        return None
-    return True
-
-
-def verify_api(server_url, slot_id, cache_dir, model=None):
-    """Verify that the /slots API is supported by the server.
-    
-    Returns True if the server supports /slots, False otherwise.
-    Records incompatibility in meta if the API is not available.
-    """
-    cache_file = "verify.kv"
-    payload = {"filename": cache_file, "model": model or ""}
-    
-    url = f"{server_url}/slots/{slot_id}?action=save"
-    try:
-        resp = httpx.post(url, json=payload, timeout=30)
-        if resp.status_code == 404:
-            _update_meta(cache_dir, {
-                "action": "unavailable",
-                "server": server_url,
-                "reason": "slots API not supported",
-                "time": time.time()
-            })
-            return False
-        resp.raise_for_status()
-        return True
-    except httpx.HTTPStatusError as e:
-        if e.response.status_code == 404:
-            _update_meta(cache_dir, {
-                "action": "unavailable",
-                "server": server_url,
-                "reason": "slots API not supported",
-                "time": time.time()
-            })
-            return False
-        return False
-    except httpx.HTTPError:
-        return False
-
-
-def _check_meta_exists(cache_dir):
-    """Check if meta file exists and is not empty."""
-    meta = Path(cache_dir) / ".slot-cache-meta.jsonl"
-    if not meta.exists():
-        return False
-    try:
-        size = meta.stat().st_size
-        if size == 0:
-            return False
-        # Check if last entry is recent (< 24 hours)
-        with open(meta) as f:
-            lines = f.readlines()
-            if lines:
-                last = json.loads(lines[-1])
-                age = time.time() - last.get("time", 0)
-                return age < 86400  # 24 hours
-    except (json.JSONDecodeError, IOError, KeyError):
-        return False
-    return False
-
-
-def _update_meta(cache_dir, entry):
-    """Append metadata entry to meta file."""
-    Path(cache_dir).mkdir(parents=True, exist_ok=True)
-    meta = Path(cache_dir) / ".slot-cache-meta.jsonl"
-    with open(meta, "a") as f:
-        f.write(json.dumps(entry) + "\n")
+    return logger
 
 
 def main():
     parser = argparse.ArgumentParser(description="llama.cpp slot cache manager")
-    parser.add_argument("command", choices=["save", "restore", "check", "verify"])
-    parser.add_argument("server_url", help="llama.cpp server base URL (e.g. http://[::1]:4000)")
-    parser.add_argument("slot_id", type=int, help="Slot ID to manage")
-    parser.add_argument("cache_name", help="Cache name (namespaced, e.g. user@dir)")
-    parser.add_argument("cache_dir", help="Directory for cache metadata files")
-    parser.add_argument("--model", default=None, help="Model name (optional, defaults to server's active model)")
+    subparsers = parser.add_subparsers(dest="command", required=True)
+
+    # save
+    save_parser = subparsers.add_parser("save", help="Save slot KV cache to remote server")
+    save_parser.add_argument("server_url", help="llama.cpp server base URL")
+    save_parser.add_argument("slot_id", type=int, help="Slot ID to manage")
+    save_parser.add_argument("cache_name", help="Cache name")
+    save_parser.add_argument("cache_dir", help="Directory for cache metadata files")
+    save_parser.add_argument("--model", default=None, help="Model name")
+
+    # restore
+    restore_parser = subparsers.add_parser("restore", help="Restore slot KV cache from remote server")
+    restore_parser.add_argument("server_url", help="llama.cpp server base URL")
+    restore_parser.add_argument("slot_id", type=int, help="Slot ID to manage")
+    restore_parser.add_argument("cache_name", help="Cache name")
+    restore_parser.add_argument("cache_dir", help="Directory for cache metadata files")
+    restore_parser.add_argument("--model", default=None, help="Model name")
+
+    # check
+    check_parser = subparsers.add_parser("check", help="Check if a valid cache file exists")
+    check_parser.add_argument("server_url", help="llama.cpp server base URL")
+    check_parser.add_argument("slot_id", type=int, help="Slot ID")
+    check_parser.add_argument("cache_name", help="Cache name")
+    check_parser.add_argument("cache_dir", help="Directory for cache metadata files")
+    check_parser.add_argument("--model", default=None, help="Model name")
+
+    # verify
+    verify_parser = subparsers.add_parser("verify", help="Verify slots API is supported")
+    verify_parser.add_argument("server_url", help="llama.cpp server base URL")
+    verify_parser.add_argument("slot_id", type=int, help="Slot ID")
+    verify_parser.add_argument("cache_name", help="Cache name")
+    verify_parser.add_argument("cache_dir", help="Directory for cache metadata files")
+    verify_parser.add_argument("--model", default=None, help="Model name")
+
+    # list
+    list_parser = subparsers.add_parser("list", help="List all cached slots")
+    list_parser.add_argument("cache_dir", help="Directory for cache metadata files")
+    list_parser.add_argument("--model", default=None, help="Model name")
+    list_parser.add_argument("--session-id", default=None, help="Filter by session ID")
+
+    # delete
+    delete_parser = subparsers.add_parser("delete", help="Delete a cached slot")
+    delete_parser.add_argument("cache_dir", help="Directory for cache metadata files")
+    delete_parser.add_argument("cache_name", help="Cache name to delete")
+
     args = parser.parse_args()
+    logger = setup_logging()
+    
+    # Set the shared logger in slot_cache_lib
+    set_logger(logger)
 
     try:
         if args.command == "save":
-            save_slot(args.server_url, args.slot_id, args.cache_name, args.cache_dir, model=args.model)
+            logger.info(f"save: server={args.server_url} slot_id={args.slot_id} cache_name={args.cache_name} cache_dir={args.cache_dir} model={args.model}")
+            result = save_slot(args.server_url, args.slot_id, args.cache_name, args.cache_dir, model=args.model)
+            if result:
+                logger.info(f"save: OK (slot {args.slot_id}, cache '{args.cache_name}')")
+            else:
+                logger.warning(f"save: FAILED (slot {args.slot_id}, cache '{args.cache_name}')")
+            sys.exit(0 if result else 1)
+
         elif args.command == "restore":
-            sys.exit(0 if restore_slot(args.server_url, args.slot_id, args.cache_name, args.cache_dir, model=args.model) else 1)
+            logger.info(f"restore: server={args.server_url} slot_id={args.slot_id} cache_name={args.cache_name} cache_dir={args.cache_dir} model={args.model}")
+            result = restore_slot(args.server_url, args.slot_id, args.cache_name, args.cache_dir, model=args.model)
+            if result:
+                logger.info(f"restore: OK (slot {args.slot_id}, cache '{args.cache_name}')")
+            else:
+                logger.warning(f"restore: FAILED (slot {args.slot_id}, cache '{args.cache_name}')")
+            sys.exit(0 if result else 1)
+
         elif args.command == "check":
+            logger.info(f"check: server={args.server_url} slot_id={args.slot_id} cache_name={args.cache_name} cache_dir={args.cache_dir} model={args.model}")
             result = check_cache(args.cache_name, args.cache_dir, server_url=args.server_url)
-            if result is None:
-                # No cache but API may be available (server might be incompatible too)
-                # Exit 1 to indicate no cache, but don't mark API as unavailable
-                sys.exit(1)
+            if result is True:
+                logger.info(f"check: cache exists for '{args.cache_name}'")
+                sys.exit(0)
             elif result is False:
-                sys.exit(2)  # Server known incompatible
+                logger.warning(f"check: slots API unavailable for '{args.cache_name}'")
+                sys.exit(2)
             else:
-                sys.exit(0)
-        elif args.command == "verify":
-            if verify_api(args.server_url, args.slot_id, args.cache_dir, model=args.model):
-                sys.exit(0)
-            else:
+                logger.info(f"check: no cache found for '{args.cache_name}' (normal for new session)")
                 sys.exit(1)
+
+        elif args.command == "verify":
+            logger.info(f"verify: server={args.server_url} slot_id={args.slot_id} cache_name={args.cache_name} cache_dir={args.cache_dir} model={args.model}")
+            if verify_api(args.server_url, args.slot_id, args.cache_dir, model=args.model):
+                logger.info(f"verify: slots API supported on {args.server_url}")
+                sys.exit(0)
+            else:
+                logger.warning(f"verify: slots API NOT supported on {args.server_url}")
+                sys.exit(1)
+
+        elif args.command == "list":
+            logger.info(f"list: cache_dir={args.cache_dir} model={args.model} session_id={args.session_id}")
+            caches = list_caches(args.cache_dir, model=args.model, session_id=args.session_id)
+            print(json.dumps(caches, indent=2))
+            logger.info(f"list: found {len(caches)} cache(s)")
+            sys.exit(0)
+
+        elif args.command == "delete":
+            logger.info(f"delete: cache_dir={args.cache_dir} cache_name={args.cache_name}")
+            result = delete_cache(args.cache_dir, args.cache_name)
+            if result:
+                logger.info(f"delete: OK (removed '{args.cache_name}')")
+            else:
+                logger.warning(f"delete: NOT FOUND (cache '{args.cache_name}')")
+            sys.exit(0 if result else 1)
+
     except httpx.HTTPStatusError as e:
-        print(f"[slot-cache] HTTP error: {e.response.status_code} - {e.response.text}", file=sys.stderr)
+        logger.error(f"HTTP error: {e.response.status_code} - {e.response.text}")
         sys.exit(1)
     except httpx.ConnectError as e:
-        print(f"[slot-cache] Connection error: {e}", file=sys.stderr)
+        logger.error(f"Connection error: {e}")
         sys.exit(1)
     except Exception as e:
-        print(f"[slot-cache] Error: {e}", file=sys.stderr)
+        logger.error(f"Error: {e}", exc_info=True)
         sys.exit(1)
 
 

@@ -12,3 +12,4 @@ docker-bake.hcl
 **/*.egg-info/
 **/*.egg
 **/*.pyc
+**/*.log

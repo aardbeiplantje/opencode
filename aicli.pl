@@ -213,16 +213,16 @@ if($< == 0){
 
 # Generate dynamic cocoindex global_settings.yml from ENV vars
 {
-    my $coco_dir = $ENV{HDIR} . "/.cocoindex";
-    my $coco_file = "$coco_dir/global_settings.yml";
-    my $base_url = $ENV{LLAMA_SERVER_URL} // "http://[::1]:4000/v1";
-    my $api_key = $ENV{LLAMA_SERVER_API_KEY} // "nokeyneeded";
-    my $index_model = $ENV{INDEX_MODEL} // "embeddinggemma-300M-Q8_0";
-    
+    my $coco_dir    = "$ENV{HDIR}/.cocoindex";
+    my $coco_file   = "$coco_dir/global_settings.yml";
+    my $base_url    = $ENV{LLAMA_SERVER_URL}     // "http://[::1]:4000/v1";
+    my $api_key     = $ENV{LLAMA_SERVER_API_KEY} // "nokeyneeded";
+    my $index_model = $ENV{INDEX_MODEL}          // "embeddinggemma-300M-Q8_0";
+
     # YAML single-quote strings: escape ' by doubling them
     (my $qurl = $base_url) =~ s/'/''/g;
     (my $qkey = $api_key) =~ s/'/''/g;
-    
+
     if (open(my $out, ">", $coco_file)) {
         print $out "embedding:\n";
         print $out "  model: llamacpp/$index_model\n";
@@ -256,6 +256,7 @@ $ENV{PROMPT_COMMAND} = 'history -a';
 $ENV{HISTFILE} = $history_path;
 $ENV{HOME} = "/home/node";
 $ENV{LOGNAME} = "node";
+$ENV{PATH} = "/home/node/.npm-global/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:$ENV{PATH}";
 
 # $ENV{BDIR} was mounted on /workdir/$BDIR
 if($ENV{BDIR}){

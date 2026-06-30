@@ -144,7 +144,7 @@ RUN mkdir -p $TMPDIR && chmod +s $TMPDIR
 RUN \
     --mount=target=/pip,type=cache,sharing=locked \
     python3 -m pip install --prefer-binary --upgrade \
-        cocoindex-code mcp
+        cocoindex-code mcp httpx
 
 FROM base AS runtime
 USER root
