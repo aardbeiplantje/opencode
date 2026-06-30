@@ -71,8 +71,9 @@ async function showToastVariant($, cacheName, serverUrl, variant, title, action)
     } catch (e) {
       logToFile('WARN', `toast error: ${e.message || e}`)
     }
-  }
-  async function runPython(args) {
+}
+
+async function runPython(args) {
   try {
     const child = Bun.spawn(
       ['python3', PYTHON_SCRIPT, ...args],
@@ -81,7 +82,7 @@ async function showToastVariant($, cacheName, serverUrl, variant, title, action)
         env: { ...process.env, PYTHONUNBUFFERED: '1' },
       }
     )
-    const { exitCode } = await child.exited
+    const exitCode = await child.exited
     return { exitCode }
   } catch (e) {
     logToFile('ERROR', `spawn error: ${e.message || e}`)
@@ -111,7 +112,6 @@ export const SlotCachePlugin = async ({ directory, $, dispose }) => {
   let slotApiAvailable = true
   let currentSessionId = null
   let cacheName = null
-  let _checkedCache = false
   let slotRestored = false
   let lastChatParamsTime = 0
 
@@ -151,7 +151,7 @@ export const SlotCachePlugin = async ({ directory, $, dispose }) => {
       return
     }
     try {
-      const { exitCode } = await pythonRun(
+      const exitCode = await pythonRun(
         ['save', LLAMA_SERVER_URL, String(SLOT_ID), cacheName, SLOT_CACHE_DIR, '--model', MODEL_NAME],
         'periodic save'
       )
@@ -272,7 +272,7 @@ export const SlotCachePlugin = async ({ directory, $, dispose }) => {
     // Inject id_slot into chat requests to use the cached slot
     'chat.params': async (input, output) => {
       lastChatParamsTime = Date.now()
-      logToFile('INFO', `got chat.params {input}`)
+      logToFile('INFO', `got chat.params ${input}`)
       if (!slotApiAvailable) return
       try {
         // Extract sessionID from hook input
@@ -286,11 +286,14 @@ export const SlotCachePlugin = async ({ directory, $, dispose }) => {
           ['check', LLAMA_SERVER_URL, String(SLOT_ID), cacheName, SLOT_CACHE_DIR, '--model', MODEL_NAME],
           'check cache'
         )
-        _checkedCache = true
-        if (exitCode === 0 && input && input.model) {
-          if (!input.model.extraBody) input.model.extraBody = {}
-          input.model.extraBody.id_slot = SLOT_ID
-          logToFile('INFO', `cache found for slot ${SLOT_ID}, injected id_slot=${SLOT_ID}`)
+        if (exitCode === 0){
+          if(input && input.model) {
+            if (!input.model.extraBody) {
+              input.model.extraBody = {}
+            }
+            input.model.extraBody.id_slot = SLOT_ID
+          }
+          logToFile('INFO', `cache check for slot ${SLOT_ID}, injected id_slot=${SLOT_ID}`)
         } else if (exitCode === 1) {
           // No cache yet — this is normal for a new session. Do NOT disable the plugin.
           // A save operation will create the cache, and then it can be loaded.
@@ -304,10 +307,6 @@ export const SlotCachePlugin = async ({ directory, $, dispose }) => {
         }
       } catch (e) {
         logToFile('ERROR', `chat.params check error: ${e.message || e}`)
-        // Only disable if we've already confirmed the cache exists and now fails
-        if (_checkedCache) {
-          slotApiUnav()
-        }
       }
     }
   }
