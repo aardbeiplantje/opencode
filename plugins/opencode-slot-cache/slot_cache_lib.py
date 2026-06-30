@@ -57,10 +57,6 @@ def save_slot(server_url, slot_id, cache_name, cache_dir, model=None):
 def restore_slot(server_url, slot_id, cache_name, cache_dir, model=None):
     """Restore slot KV cache by POSTing to llama.cpp server."""
     _log('info', f"restore_slot start: slot={slot_id} cache={cache_name} server={server_url}")
-    if not _check_meta_exists(cache_dir):
-        _log('info', f"restore_slot skipped: no valid meta file for cache_dir={cache_dir}")
-        return False
-
     payload = {"filename": cache_name, "model": model} if model else {"filename": cache_name}
 
     try:
