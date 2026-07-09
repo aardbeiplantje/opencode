@@ -33,15 +33,28 @@
   "plugin": [
     "opencode-working-memory",
     "opencode-plugin-openspec",
+    "opencode-ralph-loop",
     "opencode-mem",
     "/plugins/opencode-slot-cache/manifest.js"
   ],
   "compaction": {
+    "enabled": true,
     "auto": true,
-    "threshold": 0.75,
+    "threshold": 0.90,
     "strategy": "summarize",
     "preserveRecentMessages": 6,
     "preserveSystemPrompt": true
+  },
+  "agent": {
+    "primary": {
+      "default": "build",
+      "switch_agent": "disabled"
+    },
+    "default": {
+      "max_concurrency": 1,
+      "force_sequential_tasks": true,
+      "allowed_subagents": []
+    }
   },
   "mcp": {
     "ccc-granular": {

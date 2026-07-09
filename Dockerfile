@@ -83,6 +83,7 @@ RUN curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /
       vulkan-tools \
       libvulkan-dev \
       spirv-headers \
+      sqlite3 \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 USER root
@@ -168,6 +169,9 @@ COPY --chown=root:root cocoindex_plugins /cocoindex_plugins
 COPY pi_settings.json $HDIR/.pi/settings.json
 COPY pi_auth.json $HDIR/.pi/auth.json
 COPY --chown=node:node plugins /plugins
+COPY commands /commands
+COPY skills /skills
+RUN ln -s /workspace/.opencode-mem /home/node/.opencode-mem
 USER root
 ENV TMPDIR=/pip/tmp
 ENV XDG_CACHE_HOME=/pip
@@ -177,9 +181,8 @@ ENV COCOINDEX_CODE_DIR=$HDIR/.cocoindex
 ENV COCOINDEX_CODE_DB_PATH_MAPPING=/workdir=/coco-db-files
 ENV COCOINDEX_DISABLE_USAGE_TRACKING=1
 RUN mkdir -p /coco-db-files && chown node:node /coco-db-files
-RUN mkdir -p $HDIR/.cocoindex/ && chown node:node $HDIR/.cocoindex
 RUN mkdir -p /usr/local/lib/python3.13/dist-packages/cocoindex_plugins && cp /cocoindex_plugins/__init__.py /usr/local/lib/python3.13/dist-packages/cocoindex_plugins/ && cp /cocoindex_plugins/register_providers.py /usr/local/lib/python3.13/dist-packages/cocoindex_plugins/ && cp -r /cocoindex_plugins/llamacpp_provider /usr/local/lib/python3.13/dist-packages/cocoindex_plugins/ && cp /cocoindex_plugins/sitecustomize.py /usr/lib/python3.13/ && chown -R root:root /usr/local/lib/python3.13/dist-packages/cocoindex*
-VOLUME $HDIR/.cocoindex
+RUN ln -s /workspace/.cocoindex /home/node/.cocoindex
 ENV OPENCODE_CONFIG_DIR=/workspace
 ENV T_UID=1000
 ENV EDITOR=nano

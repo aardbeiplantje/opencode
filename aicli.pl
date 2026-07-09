@@ -15,7 +15,7 @@ use strict; use warnings;
     $0 = "opencode:$ln:$bd";
 }
 
-use File::Path qw(make_path);
+use File::Path qw(make_path rmtree);
 use File::Find qw(find);
 use File::stat;
 use POSIX ();
@@ -101,7 +101,7 @@ if(length($ENV{ROCM_PATH}//"")){
 }
 
 # setup /workspace/ subdirs
-foreach my $d ('.opencode', '.local', '.config', '.cache', '.pi'){
+foreach my $d ('.opencode', '.local', '.config', '.cache', '.pi', '.opencode-mem', '.cocoindex'){
     my $sd = "$workspace/$d";
     if(!-d $sd){
         mkdir($sd)
@@ -111,13 +111,19 @@ foreach my $d ('.opencode', '.local', '.config', '.cache', '.pi'){
         or die "[ERROR] changing ownership of $sd to $UID:$GID: $!\n";
 }
 
-# copy skills (overwrite existing files)
 my $skills_src = "/skills";
 my $skills_dir = "$workspace/.opencode/skills";
-if (-d $skills_src) {
-    make_path($skills_dir) unless -d $skills_dir;
-    copy_tree($skills_src, $skills_dir);
-}
+unlink $skills_dir if -l $skills_dir;
+rmtree $skills_dir if -d $skills_dir;
+symlink($skills_src, $skills_dir)
+    or die "Error symlink $skills_dir to -> $skills_src: $!\n";
+
+my $commands_src = "/commands";
+my $commands_dir = "$workspace/.opencode/commands";
+unlink $commands_dir if -l $commands_dir;
+rmtree $commands_dir if -d $commands_dir;
+symlink($commands_src, $commands_dir)
+    or die "Error symlink $commands_dir to -> $commands_src: $!\n";
 
 # check DOCKER_HOST
 if(($ENV{DIND}//0) == 1 and !length($ENV{DOCKER_HOST}//"")){
