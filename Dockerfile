@@ -131,6 +131,7 @@ RUN pi install git:github.com/lemonade-sdk/lemonade-pi-plugin@main
 RUN pi install npm:pi-memctx
 RUN pi install npm:@0xkobold/pi-codebase-wiki
 RUN pi install npm:pi-mcp-extension
+RUN pi install npm:@termdraw/pi
 
 # cocoindex
 USER root
