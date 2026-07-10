@@ -286,8 +286,8 @@ if (@ARGV && $ARGV[0] eq "-pi") {
     $ENV{PI_OFFLINE}            //= 1;
     $ENV{PI_CODING_AGENT_DIR}   //= "/home/node/.pi/agent";
     $ENV{PI_CODING_AGENT_SESSION_DIR} = "$workspace/.pi/sessions";
-    $ENV{LLAMA_BASE_URL}        //= "http://[::1]:13305";
     $ENV{LLAMA_SERVER_URL}      //= "http://[::1]:13305";
+    $ENV{LLAMA_BASE_URL}        //= $ENV{LLAMA_SERVER_URL};
     $ENV{LLAMA_SERVER_API_KEY}  //= "nokeyneeded";
     $ENV{SLOT_ID}               //= "0";
     shift @ARGV;
