@@ -2,8 +2,7 @@
   "lastChangelogVersion": "0.79.4",
   "theme": "dark",
   "packages": [
-    "npm:pi-llama-cpp",
-    "git:github.com/lemonade-sdk/lemonade-pi-plugin@main"
+    "git:github.com:aardbeiplantje/lemonade-pi-plugin@main"
   ],
   "defaultProvider": "lemonade",
   "defaultModel": "Qwen3.6-35B-A3B-ROCMFP4",

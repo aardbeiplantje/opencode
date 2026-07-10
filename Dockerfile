@@ -126,8 +126,7 @@ RUN npm install -g --ignore-scripts @earendil-works/pi-agent-core
 RUN npm install -g --ignore-scripts @earendil-works/pi-ai
 RUN npm install -g --ignore-scripts @earendil-works/pi-tui
 RUN pi install npm:fd
-RUN pi install npm:pi-llama-cpp
-RUN pi install git:github.com/lemonade-sdk/lemonade-pi-plugin@main
+RUN pi install git:github.com:aardbeiplantje/lemonade-pi-plugin@main
 RUN pi install npm:pi-memctx
 RUN pi install npm:@0xkobold/pi-codebase-wiki
 RUN pi install npm:pi-mcp-extension
