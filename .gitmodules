@@ -1,0 +1,4 @@
+[submodule "lemonade-pi-plugin"]
+	path = lemonade-pi-plugin
+	url = git@github.com:aardbeiplantje/lemonade-pi-plugin.git
+	branch = main
