@@ -221,7 +221,7 @@ if($< == 0){
 {
     my $coco_dir    = "$ENV{HDIR}/.cocoindex";
     my $coco_file   = "$coco_dir/global_settings.yml";
-    my $base_url    = $ENV{LLAMA_SERVER_URL}     // "http://[::1]:4000/v1";
+    my $base_url    = $ENV{LLAMA_BASE_URL}       // "http://[::1]:4000/v1";
     my $api_key     = $ENV{LLAMA_SERVER_API_KEY} // "nokeyneeded";
     my $index_model = $ENV{INDEX_MODEL}          // "embeddinggemma-300M-Q8_0";
 
@@ -286,7 +286,7 @@ if (@ARGV && $ARGV[0] eq "-pi") {
     $ENV{PI_OFFLINE}            //= 1;
     $ENV{PI_CODING_AGENT_DIR}   //= "/home/node/.pi/agent";
     $ENV{PI_CODING_AGENT_SESSION_DIR} = "$workspace/.pi/sessions";
-    $ENV{LLAMA_SERVER_URL}      //= "http://[::1]:13305";
+    $ENV{LLAMA_BASE_URL}        //= "http://[::1]:13305";
     $ENV{LLAMA_SERVER_API_KEY}  //= "nokeyneeded";
     $ENV{SLOT_ID}               //= "0";
     shift @ARGV;
