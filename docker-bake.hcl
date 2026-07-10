@@ -19,16 +19,10 @@ variable "DOCKER_IMAGE_NAME" {
 variable "DOCKER_TAG" {
   default = "latest"
 }
-variable "CACHEBUST" {
-  default = "1"
-}
 target "_common" {
   context = "."
   dockerfile = "Dockerfile"
   platforms = ["linux/amd64"]
-  args = {
-    CACHEBUST = "${CACHEBUST}"
-  }
   networks = ["host"]
   buildkit = true
 }
