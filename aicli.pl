@@ -101,7 +101,7 @@ if(length($ENV{ROCM_PATH}//"")){
 }
 
 # setup /workspace/ subdirs
-foreach my $d ('.opencode', '.local', '.config', '.cache', '.pi', '.opencode-mem', '.cocoindex'){
+foreach my $d ('.opencode', '.local', '.config', '.cache', '.opencode-mem', '.cocoindex'){
     my $sd = "$workspace/$d";
     if(!-d $sd){
         mkdir($sd)
@@ -276,24 +276,6 @@ if($ENV{BDIR}){
         or die "[ERROR] chdir to /workdir/: $!\n";
 }
 
-# If first argument is 'pi', run pi-coding-agent instead
-if (@ARGV && $ARGV[0] eq "-pi") {
-    # Remove the 'pi' command from arguments and pass rest to pi binary
-    # Set HOME environment variable for node user
-    $ENV{PI_SKIP_VERSION_CHECK} //= 1;
-    $ENV{PI_TELEMETRY}          //= 0;
-    $ENV{EDITOR}                //= 'nano';
-    $ENV{PI_OFFLINE}            //= 1;
-    $ENV{PI_CODING_AGENT_DIR}   //= "/home/node/.pi/agent";
-    $ENV{PI_CODING_AGENT_SESSION_DIR} = "$workspace/.pi/sessions";
-    $ENV{LLAMA_SERVER_URL}      //= "http://[::1]:13305";
-    $ENV{LLAMA_BASE_URL}        //= $ENV{LLAMA_SERVER_URL};
-    $ENV{LLAMA_SERVER_API_KEY}  //= "nokeyneeded";
-    $ENV{SLOT_ID}               //= "0";
-    shift @ARGV;
-    exec("/home/node/.npm-global/bin/pi", @ARGV)
-        or die "[ERROR] failed to exec pi: $!\n";
-}
 # Register custom LiteLLM providers (llamacpp embedding support)
 system("python3 /cocoindex_plugins/register_providers.py");
 # Otherwise, run opencode CLI with all provided arguments

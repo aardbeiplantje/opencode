@@ -1,7 +1,0 @@
-[submodule "lemonade-pi-plugin"]
-	path = lemonade-pi-plugin
-	url = git@github.com:aardbeiplantje/lemonade-pi-plugin.git
-	branch = main
-[submodule "pi-llama"]
-	path = pi-llama
-	url = git@github.com:aardbeiplantje/pi-llama.git

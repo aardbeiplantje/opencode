@@ -118,22 +118,6 @@ RUN npm install -g opencode-mem
 RUN opencode plugin @tarquinen/opencode-dcp@latest --global
 RUN chmod +x $HDIR/.npm-global/bin/*
 
-# pi.dev
-ENV PI_CODING_AGENT_DIR=$HDIR/.pi/agent
-ENV LEMONADE_URL=http://[::1]:13305
-RUN npm install -g --ignore-scripts @earendil-works/pi-coding-agent
-RUN npm install -g --ignore-scripts @earendil-works/pi-agent-core
-RUN npm install -g --ignore-scripts @earendil-works/pi-ai
-RUN npm install -g --ignore-scripts @earendil-works/pi-tui
-RUN pi install npm:fd
-ARG PI_LLAMA_SHA
-RUN pi install git:github.com/aardbeiplantje/pi-llama@${PI_LLAMA_SHA}
-RUN pi install git:github.com/aardbeiplantje/lemonade-pi-plugin@feature-llama.cpp-slot-id
-RUN pi install npm:pi-memctx
-RUN pi install npm:@0xkobold/pi-codebase-wiki
-RUN pi install npm:pi-mcp-extension
-RUN pi install npm:@termdraw/pi
-
 # cocoindex
 USER root
 ENV TMPDIR=/pip/tmp
@@ -169,8 +153,6 @@ COPY tui.json $OPENCODE_CONFIG_DIR/tui.json
 COPY aicli.pl /
 COPY mcp_servers /mcp
 COPY --chown=root:root cocoindex_plugins /cocoindex_plugins
-COPY pi_settings.json $HDIR/.pi/agent/settings.json
-COPY pi_auth.json $HDIR/.pi/agent/auth.json
 COPY --chown=node:node plugins /plugins
 COPY commands /commands
 COPY skills /skills
