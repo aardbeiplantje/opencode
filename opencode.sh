@@ -82,6 +82,8 @@ exec docker run --rm -it \
     -e LEMONADE_URL=${LEMONADE_URL:-${LLAMA_SERVER_URL:-http://[::1]:13305/api/}/v1} \
     -e LLAMA_SERVER_API_KEY \
     -e LLAMA_MODEL=${LLAMA_MODEL:-qwen3.5:0.8b} \
+    -e LLAMA_SLOT_ID_PLAN \
+    -e LLAMA_SLOT_ID_BUILD \
     -e INDEX_MODEL=${INDEX_MODEL:-embeddinggemma-300M-Q8_0} \
     -e GIT_AUTHOR_NAME \
     -e GIT_AUTHOR_EMAIL \
