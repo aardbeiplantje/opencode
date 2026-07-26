@@ -8,8 +8,11 @@
         "apiKey": "{env:LLAMA_SERVER_API_KEY}",
         "baseURL": "{env:LLAMA_SERVER_URL}"
       },
+      "body": {
+        "cache_prompt": true
+      },
       "models": {
-        "{env:LLAMA_MODEL}-plan": {
+        "{env:LLAMA_MODEL}/plan": {
           "id": "{env:LLAMA_MODEL}",
           "constraints": {
               "jsonMode": true
@@ -22,10 +25,10 @@
             "system_prompt_prefix": "You are an expert software engineer. You must communicate exclusively in English. All tool execution variables, script paths, filenames, and reasoning strings MUST be written using standard alphanumeric English characters."
           },
           "headers": {
-              "X-LLamaCPP-Id-slot" : "1"
+            "X-LLamaCPP-Id-slot" : "1"
           }
         },
-        "{env:LLAMA_MODEL}-build": {
+        "{env:LLAMA_MODEL}/build": {
           "id": "{env:LLAMA_MODEL}",
           "constraints": {
               "jsonMode": true
@@ -38,7 +41,7 @@
             "system_prompt_prefix": "You are an expert software engineer. You must communicate exclusively in English. All tool execution variables, script paths, filenames, and reasoning strings MUST be written using standard alphanumeric English characters."
           },
           "headers": {
-              "X-LLamaCPP-Id-slot" : "0"
+            "X-LLamaCPP-Id-slot" : "0"
           }
         }
       }
@@ -71,11 +74,11 @@
     },
     "plan": {
       "provider": "local-llama.cpp",
-      "model": "{env:LLAMA_MODEL}-plan"
+      "model": "{env:LLAMA_MODEL}/plan"
     },
     "build": {
       "provider": "local-llama.cpp",
-      "model": "{env:LLAMA_MODEL}-build"
+      "model": "{env:LLAMA_MODEL}/build"
     },
     "default": {
       "max_concurrency": 1,
