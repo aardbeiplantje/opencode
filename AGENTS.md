@@ -35,9 +35,9 @@ Docker-in-Docker support, non-root execution, and configurable agent settings.
 | `aicli.sh`       | Docker run wrapper - shares host sockets, sets env vars, launches container |
 | `opencode`       | Thin wrapper around `aicli.sh` with `-opencode` flag |
 | `docker-bake.hcl`| Docker BuildKit bake config for building/pushing images to a registry |
-| `config.json`    | Opencode agent config (model, tools, permissions, MCP servers)  |
+| `opencode.json`    | Opencode agent config (model, tools, permissions, MCP servers)  |
 
-## Project Structure
+## Build System
 
 - **Build:** Use `docker buildx bake` (defined in `docker-bake.hcl`). Pushes to
   `${DOCKER_REGISTRY}/${DOCKER_REPOSITORY}/${DOCKER_IMAGE_NAME}:${DOCKER_TAG}`.
@@ -54,9 +54,9 @@ aicli.sh (Docker run with shared volumes: docker.sock, SSH agent, git config, RO
 Runtime user: `node:1000`, but entrypoint may switch to configured UID via the `UID`
 environment variable.
 
-## Opencode Config (`config.json`)
+## Opencode Config (`opencode.json`)
 
-The config lives at `/home/node/config.json` inside the image. Edit rules:
+The config lives at `/workspace/opencode.json` inside the image. Edit rules:
 
 - Use `$schema: "https://opencode.ai/config.json"` for validation
 - Variables resolve via `{env:LLAMA_MODEL}` style substitution at runtime
