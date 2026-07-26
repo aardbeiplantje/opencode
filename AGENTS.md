@@ -3,6 +3,29 @@
 This repository packages **opencode** (AI-powered CLI tool) as a Docker image with
 Docker-in-Docker support, non-root execution, and configurable agent settings.
 
+## Project Overview
+**opencode** is an AI-powered CLI tool designed to provide a secure, Docker-based development environment. It features Docker-in-Docker (DIND) support, GPU acceleration (NVIDIA and AMD), and integrates with local LLMs via `llama.cpp`.
+
+### Key Features
+- **Docker-in-Docker (DIND):** Allows managing containers from within the session.
+- **Security:** Automatically drops privileges from `root` to a non-root user (`node`).
+- **AI Integration:** Configurable via `opencode.json`, supporting local LLMs and the Model Context Protocol (MCP).
+- **GPU Acceleration:** Supports NVIDIA CUDA and AMD ROCm for high-performance AI tasks.
+- **Shared Context:** Integrates with the host's Docker socket, SSH agent, and Git configuration.
+
+### Architecture & Workflow
+1. **`aicli.sh`**: A Docker run wrapper that sets up environment variables and shares host sockets.
+2. **`aicli.pl`**: A Perl entry point that handles privilege dropping and starts `dockerd` if DIND is enabled.
+3. **`opencode` CLI**: The main tool that executes within the container.
+
+### Project Structure
+- `commands/`: Contains CLI command implementations.
+- `mcp_servers/`: Implements Model Context Protocol servers.
+- `plugins/`: Custom plugins for extending opencode functionality.
+- `skills/`: Task-specific workflows.
+- `cocoindex_plugins/`: Provides code embedding capabilities.
+- `opencode.json`: The central configuration file for models, permissions, and plugins.
+
 ## Key Files
 
 | File             | Purpose                                                         |
