@@ -14,8 +14,8 @@ Docker-in-Docker support, non-root execution, and configurable agent settings.
 - **Shared Context:** Integrates with the host's Docker socket, SSH agent, and Git configuration.
 
 ### Architecture & Workflow
-1. **`aicli.sh`**: A Docker run wrapper that sets up environment variables and shares host sockets.
-2. **`aicli.pl`**: A Perl entry point that handles privilege dropping and starts `dockerd` if DIND is enabled.
+1. **`opencode.sh`**: A Docker run wrapper that sets up environment variables and shares host sockets.
+2. **`opencode.pl`**: A Perl entry point that handles privilege dropping and starts `dockerd` if DIND is enabled.
 3. **`opencode` CLI**: The main tool that executes within the container.
 
 ### Project Structure
@@ -31,9 +31,9 @@ Docker-in-Docker support, non-root execution, and configurable agent settings.
 | File             | Purpose                                                         |
 |------------------|-----------------------------------------------------------------|
 | `Dockerfile`     | Multi-stage build: installs Node.js 26, opencode-ai CLI, docker-ce stack (~4 stages) |
-| `aicli.pl`       | Perl entry point - drops privileges (root → UID), sets up env, starts dockerd if DIND=1, then execs opencode |
-| `aicli.sh`       | Docker run wrapper - shares host sockets, sets env vars, launches container |
-| `opencode`       | Thin wrapper around `aicli.sh` with `-opencode` flag |
+| `opencode.pl`       | Perl entry point - drops privileges (root → UID), sets up env, starts dockerd if DIND=1, then execs opencode |
+| `opencode.sh`       | Docker run wrapper - shares host sockets, sets env vars, launches container |
+| `opencode`       | Thin wrapper around `opencode.sh` with `-opencode` flag |
 | `docker-bake.hcl`| Docker BuildKit bake config for building/pushing images to a registry |
 | `opencode.json`    | Opencode agent config (model, tools, permissions, MCP servers)  |
 
@@ -46,8 +46,8 @@ Docker-in-Docker support, non-root execution, and configurable agent settings.
 ## Runtime Flow
 
 ```
-aicli.sh (Docker run with shared volumes: docker.sock, SSH agent, git config, ROCm)
-  → aicli.pl drops privileges (root→node), sets up env, starts dockerd if DIND=1
+opencode.sh (Docker run with shared volumes: docker.sock, SSH agent, git config, ROCm)
+  → opencode.pl drops privileges (root→node), sets up env, starts dockerd if DIND=1
     → execs `/home/node/.npm-global/bin/opencode` (the actual CLI tool)
 ```
 

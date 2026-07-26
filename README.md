@@ -18,16 +18,16 @@ AI-powered CLI tool packaged as a Docker image with Docker-in-Docker (DIND) supp
 | Component | Purpose |
 |----------|--------|
 | **Dockerfile** | Multi-stage build (~4 stages): installs Node.js 26, opencode-ai CLI, docker-ce stack |
-| **aicli.pl** | Perl entry point - drops privileges, sets up environment, starts dockerd if DIND=1, then execs opencode |
-| **aicli.sh** | Docker run wrapper - shares host sockets, sets env vars, launches container |
-| **opencode** | Thin wrapper around `aicli.sh` with `-opencode` flag |
+| **opencode.pl** | Perl entry point - drops privileges, sets up environment, starts dockerd if DIND=1, then execs opencode |
+| **opencode.sh** | Docker run wrapper - shares host sockets, sets env vars, launches container |
+| **opencode** | Thin wrapper around `opencode.sh` with `-opencode` flag |
 | **opencode.json** | Opencode agent configuration (model, tools, permissions, MCP servers) |
 
 ### Runtime Flow
 
 ```
-aicli.sh (Docker run with shared volumes: docker.sock, SSH agent, git config, ROCm)
-  → aicli.pl drops privileges (root→node), sets up env, starts dockerd if DIND=1
+opencode.sh (Docker run with shared volumes: docker.sock, SSH agent, git config, ROCm)
+  → opencode.pl drops privileges (root→node), sets up env, starts dockerd if DIND=1
     → execs `/home/node/.npm-global/bin/opencode` (the actual CLI tool)
 ```
 
@@ -42,20 +42,20 @@ environment variable.
 
 ```bash
 # Basic usage with Docker-in-Docker
-bash aicli.sh
+bash opencode.sh
 
 # Run opencode CLI specifically
-bash aicli.sh -opencode
+bash opencode.sh -opencode
 
 # Run pi-coding-agent
-bash aicli.sh -pi
+bash opencode.sh -pi
 ```
 
 ---
 
 ## Configuration
 
-Set environment variables before running `aicli.sh`:
+Set environment variables before running `opencode.sh`:
 
 | Variable | Default | Description |
 |----------|---------|-------------|
@@ -78,7 +78,7 @@ export LLAMA_MODEL="qwen3.5:0.8b"
 export LLAMA_SERVER_API_KEY="your-key"
 export ROCM_PATH="/opt/rocm"
 export DISPLAY=:0
-bash aicli.sh -opencode
+bash opencode.sh -opencode
 ```
 
 ### Example: Non-DIND mode (existing Docker daemon)
@@ -86,7 +86,7 @@ bash aicli.sh -opencode
 ```bash
 export DOCKER_HOST="unix:///var/run/docker.sock"
 export DIND=0
-bash aicli.sh -opencode
+bash opencode.sh -opencode
 ```
 
 ---
@@ -282,12 +282,12 @@ docker buildx bake -f docker-bake.hcl release --set "*.DOCKER_TAG=1.0"
 
 ```bash
 # Basic usage
-bash aicli.sh
+bash opencode.sh
 
 # With custom settings
 export LLAMA_MODEL="qwen3.5:0.8b"
 export LLAMA_SERVER_API_KEY="your-key"
-bash aicli.sh -opencode
+bash opencode.sh -opencode
 ```
 
 ### 3. Run Without DIND (existing Docker daemon)
@@ -295,7 +295,7 @@ bash aicli.sh -opencode
 ```bash
 export DOCKER_HOST="unix:///var/run/docker.sock"
 export DIND=0
-bash aicli.sh -opencode
+bash opencode.sh -opencode
 ```
 
 ### 4. Run with GPU
@@ -304,7 +304,7 @@ bash aicli.sh -opencode
 export LLAMA_MODEL="qwen3.5:0.8b"
 export ROCM_PATH="/opt/rocm"
 export DISPLAY=:0
-bash aicli.sh -opencode
+bash opencode.sh -opencode
 ```
 
 ---
@@ -335,16 +335,16 @@ bash aicli.sh -opencode
 ```
 /workdir/opencode.git/
 ├── Dockerfile           # Multi-stage build (~4 stages)
-├── aicli.pl            # Perl entrypoint - main logic
+├── opencode.pl            # Perl entrypoint - main logic
 │   - Drop privileges (root → UID)
 │   - Setup environment
 │   - Start dockerd if DIND=1
 │   - Execute opencode CLI
-├── aicli.sh            # Docker run wrapper
+├── opencode.sh            # Docker run wrapper
 │   - Share host sockets (docker.sock, SSH agent, git config)
 │   - Set environment variables
 │   - Launch container
-├── opencode            # Thin wrapper around aicli.sh with -opencode flag
+├── opencode            # Thin wrapper around opencode.sh with -opencode flag
 ├── opencode.json       # Agent configuration
 ├── docker-bake.hcl     # Build targets and configuration
 ├── plugins/            # Custom opencode plugins
@@ -399,7 +399,7 @@ This is a community-maintained project. Feel free to:
 
 #### "permission denied" errors
 - Verify you have proper kernel permissions for GPU devices
-- Check `--device` mounts in `aicli.sh`
+- Check `--device` mounts in `opencode.sh`
 - Ensure `ROCM_PATH` or `/dev/kfd` exists
 
 #### DIND failing to start
