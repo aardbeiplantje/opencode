@@ -150,7 +150,7 @@ RUN mkdir -p /workdir
 RUN mkdir -p /opt/rocm
 COPY --chown=node:node opencode.json $OPENCODE_CONFIG
 COPY tui.json $OPENCODE_CONFIG_DIR/tui.json
-COPY aicli.pl /
+COPY opencode.pl /
 COPY mcp_servers /mcp
 COPY --chown=root:root cocoindex_plugins /cocoindex_plugins
 COPY --chown=node:node plugins /plugins
@@ -172,4 +172,4 @@ ENV OPENCODE_CONFIG_DIR=/workspace
 ENV T_UID=1000
 ENV EDITOR=nano
 ENV VISUAL=nano
-ENTRYPOINT ["/usr/bin/perl", "/aicli.pl"]
+ENTRYPOINT ["/usr/bin/perl", "/opencode.pl"]

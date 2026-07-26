@@ -92,7 +92,7 @@ exec docker run --rm -it \
     -e DISPLAY \
     -v /tmp/.X11-unix:/tmp/.X11-unix:ro \
     -v $ROCM_PATH:/opt/rocm:ro \
-    -v aicli-${w##-}-${LOGNAME}-${BDIR}-cocodb:/coco-db-files:rw \
+    -v opencode-${w##-}-${LOGNAME}-${BDIR}-cocodb:/coco-db-files:rw \
     --shm-size 1G \
     --ulimit memlock=-1:-1 \
     --ulimit stack=67108864:67108864 \
@@ -111,7 +111,7 @@ exec docker run --rm -it \
     --device /dev/accel \
     --network=host \
     --name ${w##-}-${LOGNAME}-${BDIR} \
-    -v aicli-${w##-}-${LOGNAME}-workspace:/workspace \
+    -v opencode-${w##-}-${LOGNAME}-workspace:/workspace \
     -v "${PWD}":/workdir/${BDIR} \
         "$DOCKER_IMAGE" \
             $w $*
