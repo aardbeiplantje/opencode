@@ -56,8 +56,7 @@
     "opencode-working-memory",
     "opencode-plugin-openspec",
     "opencode-ralph-loop",
-    "opencode-mem",
-    "/plugins/opencode-slot-cache/manifest.js"
+    "opencode-mem"
   ],
   "compaction": {
     "enabled": true,
