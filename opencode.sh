@@ -59,6 +59,15 @@ if [ "${DIND:-0}" = "1" ]; then
     extra_opts="$extra_opts -e DIND --privileged=true"
 fi
 
+slot_ids=$LLAMA_SLOT_IDS
+if [ ! -z "$slot_ids" ]; then
+    sl1=${slot_ids#*,}
+    sl2=${slot_ids%,*}
+    LLAMA_SLOT_ID_PLAN=${LLAMA_SLOT_ID_PLAN:-$sl1}
+    LLAMA_SLOT_ID_BUILD=${LLAMA_SLOT_ID_BUILD:-$sl2}
+    export LLAMA_SLOT_ID_PLAN LLAMA_SLOT_ID_BUILD
+fi
+
 ROCM_PATH=${ROCM_PATH:-/opt/rocm}
 ROCM_PATH=$(readlink -f "$ROCM_PATH")
 exec docker run --rm -it \
