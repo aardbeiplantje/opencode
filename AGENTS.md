@@ -21,16 +21,16 @@ Docker-in-Docker support, non-root execution, and configurable agent settings.
 ### Project Structure
 - `commands/`: Contains CLI command implementations.
 - `mcp_servers/`: Implements Model Context Protocol servers.
-- `plugins/`: Custom plugins for extending opencode functionality.
+- `plugins/`: Custom plugins for extending opencode functionality (currently empty).
 - `skills/`: Task-specific workflows.
-- `cocoindex_plugins/`: Provides code embedding capabilities.
+- `cocoindex_plugins/`: Provides code embedding capabilities (llamacpp LiteLLM providers).
 - `opencode.json`: The central configuration file for models, permissions, and plugins.
 
 ## Key Files
 
 | File             | Purpose                                                         |
 |------------------|-----------------------------------------------------------------|
-| `Dockerfile`     | Multi-stage build: installs Node.js 26, opencode-ai CLI, docker-ce stack (~4 stages) |
+| `Dockerfile`     | Multi-stage build: installs Node.js 26, opencode-ai CLI, docker-ce stack. CocoIndex LiteLLM providers registered at build time via `register_providers.py` |
 | `opencode.pl`       | Perl entry point - drops privileges (root → UID), sets up env, starts dockerd if DIND=1, then execs opencode |
 | `opencode.sh`       | Docker run wrapper - shares host sockets, sets env vars, launches container |
 | `opencode`       | Thin wrapper around `opencode.sh` with `-opencode` flag |
@@ -50,6 +50,8 @@ opencode.sh (Docker run with shared volumes: docker.sock, SSH agent, git config,
   → opencode.pl drops privileges (root→node), sets up env, starts dockerd if DIND=1
     → execs `/home/node/.npm-global/bin/opencode` (the actual CLI tool)
 ```
+
+Note: CocoIndex LiteLLM providers are registered at Docker build time, not at runtime.
 
 Runtime user: `node:1000`, but entrypoint may switch to configured UID via the `UID`
 environment variable.
