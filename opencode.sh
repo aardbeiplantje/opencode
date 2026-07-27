@@ -8,7 +8,6 @@ extra_opts=
 
 w=${1:--opencode}
 shift
-echo "running $w"
 
 # share ssh keys (dangerous)
 if [ ! -z "$SSH_AUTH_SOCK" ]; then
@@ -21,11 +20,9 @@ fi
 # Share Docker socket if available and set DOCKER_HOST
 if [ ! -z "$DOCKER_HOST" ]; then
     d_sock=${DOCKER_HOST##unix://}
-    echo "check $d_sock"
     if [ -S "$d_sock" ]; then
         extra_opts="-v $d_sock:/var/run/docker.sock $extra_opts"
         d_host=unix:///var/run/docker.sock
-        echo "using DOCKER_HOST=$d_host"
     else
         d_host=$DOCKER_HOST
     fi
