@@ -264,6 +264,12 @@ $ENV{HOME} = "/home/node";
 $ENV{LOGNAME} = "node";
 $ENV{PATH} = "/home/node/.npm-global/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:$ENV{PATH}";
 
+my $slts = $ENV{LLAMA_SLOT_IDS} //= "0,0";
+if($slts =~ m/^(\d+),(\d+)$/){
+    $ENV{LLAMA_SLOT_ID_PLAN}  //= $1;
+    $ENV{LLAMA_SLOT_ID_BUILD} //= $2;
+}
+
 # $ENV{BDIR} was mounted on /workdir/$BDIR
 if($ENV{BDIR}){
     chdir("/workdir/$ENV{BDIR}")
@@ -278,6 +284,5 @@ if($ENV{BDIR}){
 
 # Set HOME environment variable for node user
 $ENV{OPENCODE_EXPERIMENTAL_DISABLE_COPY_ON_SELECT} = "true";
-@ARGV && $ARGV[0] eq "-opencode" && shift @ARGV;
 exec("/home/node/.npm-global/bin/opencode", @ARGV)
     or die "[ERROR] failed to exec: $!\n";

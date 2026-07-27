@@ -6,9 +6,6 @@ BDIR=${HERE##*/}
 
 extra_opts=
 
-w=${1:--opencode}
-shift
-
 # share ssh keys (dangerous)
 if [ ! -z "$SSH_AUTH_SOCK" ]; then
     b_sock=$(readlink -f "$SSH_AUTH_SOCK")
@@ -56,15 +53,6 @@ if [ "${DIND:-0}" = "1" ]; then
     extra_opts="$extra_opts -e DIND --privileged=true"
 fi
 
-slot_ids=$LLAMA_SLOT_IDS
-if [ ! -z "$slot_ids" ]; then
-    sl1=${slot_ids#*,}
-    sl2=${slot_ids%,*}
-    LLAMA_SLOT_ID_PLAN=${LLAMA_SLOT_ID_PLAN:-$sl1}
-    LLAMA_SLOT_ID_BUILD=${LLAMA_SLOT_ID_BUILD:-$sl2}
-    export LLAMA_SLOT_ID_PLAN LLAMA_SLOT_ID_BUILD
-fi
-
 ROCM_PATH=${ROCM_PATH:-/opt/rocm}
 ROCM_PATH=$(readlink -f "$ROCM_PATH")
 exec docker run --rm -it \
@@ -88,6 +76,7 @@ exec docker run --rm -it \
     -e LEMONADE_URL=${LEMONADE_URL:-${LLAMA_SERVER_URL:-http://[::1]:13305/api/}/v1} \
     -e LLAMA_SERVER_API_KEY \
     -e LLAMA_MODEL=${LLAMA_MODEL:-qwen3.5:0.8b} \
+    -e LLAMA_SLOT_IDS \
     -e LLAMA_SLOT_ID_PLAN \
     -e LLAMA_SLOT_ID_BUILD \
     -e INDEX_MODEL=${INDEX_MODEL:-embeddinggemma-300M-Q8_0} \
@@ -100,7 +89,7 @@ exec docker run --rm -it \
     -e DISPLAY \
     -v /tmp/.X11-unix:/tmp/.X11-unix:ro \
     -v $ROCM_PATH:/opt/rocm:ro \
-    -v opencode-${w##-}-${LOGNAME}-${BDIR}-cocodb:/coco-db-files:rw \
+    -v opencode-${LOGNAME}-${BDIR}-cocodb:/coco-db-files:rw \
     --shm-size 1G \
     --ulimit memlock=-1:-1 \
     --ulimit stack=67108864:67108864 \
@@ -118,8 +107,8 @@ exec docker run --rm -it \
     --device /dev/dri \
     --device /dev/accel \
     --network=host \
-    --name ${w##-}-${LOGNAME}-${BDIR} \
-    -v opencode-${w##-}-${LOGNAME}-workspace:/workspace \
+    --name opencode-${LOGNAME}-${BDIR} \
+    -v opencode-${LOGNAME}-workspace:/workspace \
     -v "${PWD}":/workdir/${BDIR} \
         "$DOCKER_IMAGE" \
-            $w $*
+            $*
