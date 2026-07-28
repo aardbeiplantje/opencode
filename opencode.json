@@ -38,7 +38,7 @@
             "X-LLamaCPP-Id-slot": "5"
           }
         },
-        "{env:LLAMA_MODEL}/explore": {
+        "{env:LLAMA_MODEL}/explore1": {
           "id": "{env:LLAMA_MODEL}",
           "constraints": {
             "jsonMode": true
@@ -49,6 +49,19 @@
           },
           "headers": {
             "X-LLamaCPP-Id-slot": "4"
+          }
+        },
+        "{env:LLAMA_MODEL}/explore2": {
+          "id": "{env:LLAMA_MODEL}",
+          "constraints": {
+            "jsonMode": true
+          },
+          "parameters": {
+            "stop": ["<|im_end|>", "<|object_ref_start|>", "</tool_call>"],
+            "temperature": 0.0
+          },
+          "headers": {
+            "X-LLamaCPP-Id-slot": "2"
           }
         },
         "{env:LLAMA_MODEL}/verifier": {
@@ -100,11 +113,17 @@
       "provider": "llama.cpp",
       "model": "llama.cpp/{env:LLAMA_MODEL}/build"
     },
-    "explore": {
+    "explore1": {
       "mode": "subagent",
-      "description": "Fast read-only exploration of codebase files using grep, glob, and file reading.",
+      "description": "Primary read-only codebase explorer for pattern matching, grep, and file inspection.",
       "provider": "llama.cpp",
-      "model": "llama.cpp/{env:LLAMA_MODEL}/explore"
+      "model": "llama.cpp/{env:LLAMA_MODEL}/explore1"
+    },
+    "explore2": {
+      "mode": "subagent",
+      "description": "Secondary read-only codebase explorer for parallel search, file inspection, and dependency tracing.",
+      "provider": "llama.cpp",
+      "model": "llama.cpp/{env:LLAMA_MODEL}/explore2"
     },
     "verifier": {
       "mode": "subagent",
@@ -113,9 +132,9 @@
       "model": "llama.cpp/{env:LLAMA_MODEL}/verifier"
     },
     "default": {
-      "max_concurrency": 1,
-      "force_sequential_tasks": true,
-      "allowed_subagents": ["explore", "verifier"]
+      "max_concurrency": 2,
+      "force_sequential_tasks": false,
+      "allowed_subagents": ["explore1", "explore2", "verifier"]
     }
   },
   "mcp": {
