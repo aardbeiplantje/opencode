@@ -21,9 +21,6 @@
             "stop": ["<|im_end|>", "<|object_ref_start|>", "</tool_call>"],
             "temperature": 0.1
           },
-          "extraArgs": {
-            "system_prompt_prefix": "You are an expert software engineer focused on system architecture and design. Communicate concisely in standard English."
-          },
           "headers": {
             "X-LLamaCPP-Id-slot": "6"
           }
@@ -37,14 +34,11 @@
             "stop": ["<|im_end|>", "<|object_ref_start|>", "</tool_call>"],
             "temperature": 0.1
           },
-          "extraArgs": {
-            "system_prompt_prefix": "You are an expert software engineer focused on implementation and code modifications. Communicate concisely in standard English."
-          },
           "headers": {
             "X-LLamaCPP-Id-slot": "5"
           }
         },
-        "{env:LLAMA_MODEL}/explorer": {
+        "{env:LLAMA_MODEL}/explore": {
           "id": "{env:LLAMA_MODEL}",
           "constraints": {
             "jsonMode": true
@@ -106,22 +100,22 @@
       "provider": "llama.cpp",
       "model": "llama.cpp/{env:LLAMA_MODEL}/build"
     },
-    "explorer": {
+    "explore": {
       "mode": "subagent",
-      "description": "Read-only exploration of codebase files using grep, glob, and file reading. Use when searching or navigating code structure.",
+      "description": "Fast read-only exploration of codebase files using grep, glob, and file reading.",
       "provider": "llama.cpp",
-      "model": "llama.cpp/{env:LLAMA_MODEL}/explorer"
+      "model": "llama.cpp/{env:LLAMA_MODEL}/explore"
     },
     "verifier": {
       "mode": "subagent",
-      "description": "Runs test suites, typecheckers, and linters via bash commands to verify correctness and prevent regressions.",
+      "description": "Runs test suites, typecheckers, and linters via bash commands to verify correctness.",
       "provider": "llama.cpp",
       "model": "llama.cpp/{env:LLAMA_MODEL}/verifier"
     },
     "default": {
       "max_concurrency": 1,
       "force_sequential_tasks": true,
-      "allowed_subagents": ["explorer", "verifier"]
+      "allowed_subagents": ["explore", "verifier"]
     }
   },
   "mcp": {
