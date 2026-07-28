@@ -15,39 +15,65 @@
         "{env:LLAMA_MODEL}/plan": {
           "id": "{env:LLAMA_MODEL}",
           "constraints": {
-              "jsonMode": true
+            "jsonMode": true
           },
           "parameters": {
             "stop": ["<|im_end|>", "<|object_ref_start|>", "</tool_call>"],
             "temperature": 0.1
           },
           "extraArgs": {
-            "system_prompt_prefix": "You are an expert software engineer. You must communicate exclusively in English. All tool execution variables, script paths, filenames, and reasoning strings MUST be written using standard alphanumeric English characters."
+            "system_prompt_prefix": "You are an expert software engineer focused on system architecture and design. Communicate concisely in standard English."
           },
           "headers": {
-            "X-LLamaCPP-Id-slot" : "{env:LLAMA_SLOT_ID_PLAN}"
+            "X-LLamaCPP-Id-slot": "6"
           }
         },
         "{env:LLAMA_MODEL}/build": {
           "id": "{env:LLAMA_MODEL}",
           "constraints": {
-              "jsonMode": true
+            "jsonMode": true
           },
           "parameters": {
             "stop": ["<|im_end|>", "<|object_ref_start|>", "</tool_call>"],
             "temperature": 0.1
           },
           "extraArgs": {
-            "system_prompt_prefix": "You are an expert software engineer. You must communicate exclusively in English. All tool execution variables, script paths, filenames, and reasoning strings MUST be written using standard alphanumeric English characters."
+            "system_prompt_prefix": "You are an expert software engineer focused on implementation and code modifications. Communicate concisely in standard English."
           },
           "headers": {
-            "X-LLamaCPP-Id-slot" : "{env:LLAMA_SLOT_ID_BUILD}"
+            "X-LLamaCPP-Id-slot": "5"
+          }
+        },
+        "{env:LLAMA_MODEL}/explorer": {
+          "id": "{env:LLAMA_MODEL}",
+          "constraints": {
+            "jsonMode": true
+          },
+          "parameters": {
+            "stop": ["<|im_end|>", "<|object_ref_start|>", "</tool_call>"],
+            "temperature": 0.0
+          },
+          "headers": {
+            "X-LLamaCPP-Id-slot": "4"
+          }
+        },
+        "{env:LLAMA_MODEL}/verifier": {
+          "id": "{env:LLAMA_MODEL}",
+          "constraints": {
+            "jsonMode": true
+          },
+          "parameters": {
+            "stop": ["<|im_end|>", "<|object_ref_start|>", "</tool_call>"],
+            "temperature": 0.0
+          },
+          "headers": {
+            "X-LLamaCPP-Id-slot": "3"
           }
         }
       }
     }
   },
-  "model": "llama.cpp/{env:LLAMA_MODEL}",
+  "model": "llama.cpp/{env:LLAMA_MODEL}/build",
   "permission": {
     "edit": "allow",
     "bash": "allow"
@@ -71,17 +97,31 @@
       "default": "build"
     },
     "plan": {
+      "mode": "primary",
       "provider": "llama.cpp",
       "model": "llama.cpp/{env:LLAMA_MODEL}/plan"
     },
     "build": {
+      "mode": "primary",
       "provider": "llama.cpp",
       "model": "llama.cpp/{env:LLAMA_MODEL}/build"
+    },
+    "explorer": {
+      "mode": "subagent",
+      "description": "Read-only exploration of codebase files using grep, glob, and file reading. Use when searching or navigating code structure.",
+      "provider": "llama.cpp",
+      "model": "llama.cpp/{env:LLAMA_MODEL}/explorer"
+    },
+    "verifier": {
+      "mode": "subagent",
+      "description": "Runs test suites, typecheckers, and linters via bash commands to verify correctness and prevent regressions.",
+      "provider": "llama.cpp",
+      "model": "llama.cpp/{env:LLAMA_MODEL}/verifier"
     },
     "default": {
       "max_concurrency": 1,
       "force_sequential_tasks": true,
-      "allowed_subagents": []
+      "allowed_subagents": ["explorer", "verifier"]
     }
   },
   "mcp": {
