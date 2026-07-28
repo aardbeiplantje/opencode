@@ -131,7 +131,7 @@ ENV COCOINDEX_DISABLE_USAGE_TRACKING=1
 RUN mkdir -p $TMPDIR && chmod +s $TMPDIR
 RUN \
     --mount=target=/pip,type=cache,sharing=locked \
-    python3 -m pip install --prefer-binary --upgrade \
+    python3 -m pip install --prefer-binary --upgrade  --ignore-installed \
         cocoindex-code mcp httpx
 
 FROM base AS runtime
