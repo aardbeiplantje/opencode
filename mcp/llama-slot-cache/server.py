@@ -8,7 +8,7 @@ from pathlib import Path
 import httpx
 
 from mcp.server.stdio import stdio_server
-from mcp import FastMCP
+from fastmcp import FastMCP
 
 
 def _clean_server_url(url):

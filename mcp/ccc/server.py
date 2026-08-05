@@ -1,6 +1,6 @@
 import asyncio
 from mcp.server.stdio import stdio_server
-from mcp import FastMCP
+from fastmcp import FastMCP
 
 mcp = FastMCP("ccc")
 

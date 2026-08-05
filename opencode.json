@@ -138,7 +138,7 @@
     }
   },
   "mcp": {
-    "ccc-granular": {
+    "ccc": {
       "type": "local",
       "enabled": true,
       "command": ["python3", "/mcp/ccc/server.py"]

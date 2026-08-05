@@ -1,2 +1,4 @@
-fastmcp>=2.0.0
 httpx
+mcp[cli]
+fastmcp-slim[server]
+fastmcp
