@@ -212,6 +212,14 @@ COPY --chown=root:root cocoindex_plugins/sitecustomize.py /lib/python/sitecustom
 ENV PYTHONPATH=/lib/python
 RUN python3 /lib/python/cocoindex_plugins/register_providers.py
 
+RUN rustup default stable
+RUN TMPDIR=~/.tmp cargo install minijinja-cli
+RUN \
+    --mount=target=/pip,type=cache,sharing=locked \
+    python3 -m pip install --prefer-binary --upgrade \
+        minijinja \
+        || exit $?
+
 
 FROM base AS runtime
 USER root
