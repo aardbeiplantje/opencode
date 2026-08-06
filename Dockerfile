@@ -86,6 +86,7 @@ RUN curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /
       sqlite3 \
       xxd \
       gdb \
+      rustup \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 USER root
