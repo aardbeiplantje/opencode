@@ -5,7 +5,9 @@ LABEL description="Docker image for opencode - AI-powered CLI tool with secure n
 LABEL version="0.1.0"
 
 # Install basic development tools and iptables/ipset
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN --mount=type=cache,target=/var/cache/apt \
+    --mount=type=cache,target=/var/lib/apt \
+    apt-get update && apt-get install -y --no-install-recommends \
    less \
    git \
    ripgrep \
@@ -41,7 +43,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 ADD https://downloads.arduino.cc/arduino-cli/arduino-cli_1.5.0-1_amd64.deb /tmp/arduino-cli.deb
 RUN dpkg -i /tmp/arduino-cli.deb && rm /tmp/arduino-cli.deb
 
-RUN curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/trusted.gpg.d/docker.asc && \
+RUN --mount=type=cache,target=/var/cache/apt \
+    --mount=type=cache,target=/var/lib/apt \
+    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/trusted.gpg.d/docker.asc && \
     echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/trusted.gpg.d/docker.asc] https://download.docker.com/linux/ubuntu jammy stable" > /etc/apt/sources.list.d/docker.list && \
     apt-get update && apt-get install -y --no-install-recommends \
       perl \
