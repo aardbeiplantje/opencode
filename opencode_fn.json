@@ -119,30 +119,25 @@
     },
     "plan": {
       "mode": "primary",
-      "provider": "llama.cpp",
       "model": "llama.cpp/{env:LLAMA_MODEL}/plan"
     },
     "build": {
       "mode": "primary",
-      "provider": "llama.cpp",
       "model": "llama.cpp/{env:LLAMA_MODEL}/build"
     },
     "explore1": {
       "mode": "subagent",
       "description": "Primary read-only codebase explorer for pattern matching, grep, and file inspection.",
-      "provider": "llama.cpp",
       "model": "llama.cpp/{env:LLAMA_MODEL}/explore1"
     },
     "explore2": {
       "mode": "subagent",
       "description": "Secondary read-only codebase explorer for parallel search, file inspection, and dependency tracing.",
-      "provider": "llama.cpp",
       "model": "llama.cpp/{env:LLAMA_MODEL}/explore2"
     },
     "verifier": {
       "mode": "subagent",
       "description": "Runs test suites, typecheckers, and linters via bash commands to verify correctness.",
-      "provider": "llama.cpp",
       "model": "llama.cpp/{env:LLAMA_MODEL}/verifier"
     },
     "default": {
