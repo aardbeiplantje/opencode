@@ -10,7 +10,7 @@ use strict; use warnings;
     my $bd = $ENV{BDIR}    // "session";
     $bd =~ s/^.*\///g;
     $bd =~ s/[^a-zA-Z0-9_-]/_/g;
-    my $ln = $ENV{LOGNAME} // "node";
+    my $ln = $ENV{LOGNAME} // "oc";
     $ln =~ s/[^a-zA-Z0-9_-]/_/g;
     $0 = "opencode:$ln:$bd";
 }
@@ -20,8 +20,8 @@ use File::Find qw(find);
 use File::stat;
 use POSIX ();
 
-my $UID = 1000;
-my $GID = 1000;
+my $UID = $ENV{LOGNAME_UID} // $ENV{UID} // 2000;
+my $GID = $ENV{LOGNAME_GID} // 2000;
 my $workspace = "/workspace";
 
 sub copy_file {
@@ -31,40 +31,6 @@ sub copy_file {
         return 1;
     }
     0;
-}
-
-sub set_mtime {
-    my ($file, $mtime) = @_;
-    utime($mtime, $mtime, $file);
-}
-
-sub copy_tree {
-    my ($src, $dst_dir) = @_;
-    find({
-        no_chdir => 1,
-        follow_skip => 2,
-        wanted => sub {
-            my $rel; { local $File::Find::name = $_; ($rel = $_) =~ s{^\Q${src}/?\E}{}o; }
-            my $dest = "$dst_dir/$rel";
-
-            if (-l $_) {
-                unlink($dest) if -e $dest;
-                symlink(readlink($_), $dest);
-            } elsif (-d $_) {
-                make_path($dest) unless -d $dest;
-                my $st = lstat($_);
-                chmod($st->mode, $dest) if defined($st);
-                set_mtime($dest, $st->mtime) if defined($st);
-                chown($UID, $GID, $dest) if -e $dest;
-            } elsif (-f $_) {
-                copy_file($_, $dest);
-                my $st = stat($_);
-                chmod($st->mode & 07777, $dest) if defined($st);
-                set_mtime($dest, $st->mtime) if defined($st);
-                chown($UID, $GID, $dest) if -e $dest;
-            }
-        },
-    }, $src);
 }
 
 # Set umask to 0022 (owner=rwx, group=rx, other=rx for new dirs; rw-r--r-- for files)
@@ -174,7 +140,7 @@ if(($ENV{DIND}//0) == 1 and !length($ENV{DOCKER_HOST}//"")){
                     "--log-level", "error",
                     "--log-format", "text",
                     "--host=unix:///var/run/docker.sock",
-                    "-G", "1000",
+                    "-G", $GID,
                     "-D",
                     "--data-root", "$workspace/docker";
                 # likely not reached, but if dockerd isn't found, it is, so exit!
@@ -198,7 +164,7 @@ if(($ENV{DIND}//0) == 1 and !length($ENV{DOCKER_HOST}//"")){
 }
 
 # If running as root and UID environment variable is set, use that UID
-my $target_uid = $ENV{UID} // $UID;
+my $target_uid = $UID;
 if($< == 0){
     local $! = 0;
     # Drop to GID
@@ -254,15 +220,18 @@ die "[ERROR] running as root EGID/RGID is not allowed\n"
 
 #  ↑ root user
 #--------------------------------------------------------
-#  ↓ user 1000 (node)
+#  ↓ user 2000 (oc)
 #
 
-$ENV{XDG_CACHE_HOME} = "$workspace/.cache";
+my $hdir = $ENV{HDIR} || "/oc";
+$ENV{XDG_DATA_HOME}  = "$hdir/oc";
+$ENV{XDG_CONFIG_HOME}= "$hdir/oc";
+$ENV{XDG_CACHE_HOME} = "$hdir/oc";
 $ENV{PROMPT_COMMAND} = 'history -a';
-$ENV{HISTFILE} = $history_path;
-$ENV{HOME} = "/home/node";
-$ENV{LOGNAME} = "node";
-$ENV{PATH} = "/home/node/.npm-global/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:$ENV{PATH}";
+$ENV{HISTFILE}   = $history_path;
+$ENV{HOME}       = $hdir;
+$ENV{LOGNAME}  //= "oc";
+$ENV{PATH}       = "$hdir/.npm-global/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:$ENV{PATH}";
 
 my $slts = $ENV{LLAMA_SLOT_IDS} //= "0,0";
 if($slts =~ m/^(\d+),(\d+)$/){
@@ -282,7 +251,9 @@ if($ENV{BDIR}){
         or die "[ERROR] chdir to /workdir/: $!\n";
 }
 
-# Set HOME environment variable for node user
+# Set HOME environment variable for runtime user
 $ENV{OPENCODE_EXPERIMENTAL_DISABLE_COPY_ON_SELECT} = "true";
-exec("/home/node/.npm-global/bin/opencode", @ARGV)
+print "$_=$ENV{$_}\n" for sort keys %ENV;
+print "RUID=$<, EUID=$>, RGID=$(, EGID=$)\n";
+exec("$hdir/opencode", @ARGV)
     or die "[ERROR] failed to exec: $!\n";
