@@ -20,8 +20,8 @@ use File::Find qw(find);
 use File::stat;
 use POSIX ();
 
-my $UID = $ENV{LOGNAME_UID} // $ENV{UID} // 2000;
-my $GID = $ENV{LOGNAME_GID} // 2000;
+my $UID = $ENV{LOGNAME_UID} // $ENV{UID} // 1000;
+my $GID = $ENV{LOGNAME_GID} // 1000;
 my $workspace = "/workspace";
 
 sub copy_file {
@@ -220,7 +220,7 @@ die "[ERROR] running as root EGID/RGID is not allowed\n"
 
 #  ↑ root user
 #--------------------------------------------------------
-#  ↓ user 2000 (oc)
+#  ↓ user 1000 (oc)
 #
 
 my $hdir = $ENV{HDIR} || "/oc";
