@@ -1,0 +1,14 @@
+{
+  "openrouter": {
+    "type": "api",
+    "key": "{env:OPENROUTER_API_KEY}"
+  },
+  "nvidia": {
+    "type": "api",
+    "key": "{env:NVIDIA_API_KEY}"
+  },
+  "cerebras": {
+    "type": "api",
+    "key": "{env:CEREBRAS_API_KEY}"
+  }
+}

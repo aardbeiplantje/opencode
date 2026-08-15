@@ -78,6 +78,24 @@
           }
         }
       }
+    },
+    "openrouter": {
+      "models": {
+        "~nvidia/nemotron-3.5-lightning:free": {
+          "options": {
+            "provider": {
+               "order": ["nvidia"],
+               "allow_fallback": true
+            }
+          }
+        }
+      }
+    },
+    "nvidia": {
+      "models": {
+        "nemotron-3.5-lightning": {
+        }
+      }
     }
   },
   "model": "llama.cpp/{env:LLAMA_MODEL}/build",
@@ -86,10 +104,6 @@
     "bash": "allow"
   },
   "plugin": [
-    "opencode-working-memory",
-    "opencode-plugin-openspec",
-    "opencode-ralph-loop",
-    "opencode-mem"
   ],
   "compaction": {
     "enabled": true,

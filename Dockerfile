@@ -234,8 +234,9 @@ RUN rm -rf /tmp/* /tmp/.*.so /workspace/.local
 RUN mkdir -p /workspace
 RUN mkdir -p /workdir
 RUN mkdir -p /opt/rocm
-COPY --chown=node:node opencode.json $OPENCODE_CONFIG
-COPY tui.json $OPENCODE_CONFIG_DIR/tui.json
+COPY --chown=node:node opencode_fn.json $OPENCODE_CONFIG
+COPY tui_fn.json $OPENCODE_CONFIG_DIR/tui.json
+COPY auth_fn.json $OPENCODE_CONFIG_DIR/auth.json
 COPY opencode.pl /
 COPY --chown=node:node plugins /plugins
 COPY commands /commands

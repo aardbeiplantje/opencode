@@ -84,6 +84,9 @@ exec docker run --rm -it \
     -e GIT_AUTHOR_EMAIL \
     -e GIT_COMITTER_NAME \
     -e GIT_COMITTER_EMAIL \
+    -e OPENROUTER_API_KEY \
+    -e CEREBRAS_API_KEY \
+    -e NVIDIA_API_KEY \
     -e GIT_EDITOR="true" \
     -e ROCM_PATH=/opt/rocm \
     -e DISPLAY \
