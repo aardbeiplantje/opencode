@@ -17,22 +17,22 @@ AI-powered CLI tool packaged as a Docker image with Docker-in-Docker (DIND) supp
 
 | Component | Purpose |
 |----------|--------|
-| **Dockerfile** | Multi-stage build (~4 stages): installs Node.js 26, opencode-ai CLI, docker-ce stack |
+| **Dockerfile** | Multi-stage build (6 stages): base, python-rt, perl-rt, oc-install, rust-rt, runtime |
 | **opencode.pl** | Perl entry point - drops privileges, sets up environment, starts dockerd if DIND=1, then execs opencode |
 | **opencode.sh** | Docker run wrapper - shares host sockets, sets env vars, launches container |
 | **opencode** | Thin wrapper around `opencode.sh` with `-opencode` flag |
-| **opencode.json** | Opencode agent configuration (model, tools, permissions, MCP servers) |
+| **opencode_fn.json** | Opencode agent configuration (model, tools, permissions, MCP servers) — copied to `/workspace/opencode.json` at build |
 
 ### Runtime Flow
 
 ```
 opencode.sh (Docker run with shared volumes: docker.sock, SSH agent, git config, ROCm)
-  → opencode.pl drops privileges (root→node), sets up env, starts dockerd if DIND=1
-    → execs `/home/node/.npm-global/bin/opencode` (the actual CLI tool)
+  → opencode.pl drops privileges (root→oc), sets up env, starts dockerd if DIND=1
+    → execs `$HDIR/opencode` (the actual CLI tool, HDIR=/oc)
 ```
 
-Runtime user: `node:1000`, but entrypoint may switch to configured UID via the `UID`
-environment variable.
+Runtime user: `oc:2000` (UID 2000, GID 2000), configurable via `LOGNAME_UID`/`LOGNAME_GID`
+environment variables.
 
 ---
 
@@ -100,8 +100,8 @@ bash opencode.sh -opencode
 - Supports GPU passthrough (`--device /dev/kfd`, `/dev/dri`)
 
 ### Security & Privilege Management
-- Drops privileges: root → UID 1000 (user `node`)
-- Configurable UID via `$ENV{UID}` environment variable
+- Drops privileges: root → UID 2000 (user `oc`)
+- Configurable UID via `LOGNAME_UID`/`LOGNAME_GID` environment variables (defaults: 2000)
 - Groups added: video (986), render (983), audio (992)
 - Memory lock and stack limits for GPU access
 - Seccomp disabled for maximum permissions when needed
@@ -121,11 +121,14 @@ bash opencode.sh -opencode
 
 ## 🏗️ Dockerfile Structure
 
-### Multi-stage Build (3 Stages)
+### Multi-stage Build (6 Stages)
 
-1. **`AS base`**: ~40+ development tools, Docker CE, Node.js 26, Python 3.13
-2. **`AS runtime`**: Clean installs, symlink setup, environment configuration
-3. **Final stage**: Copies configuration files, sets entrypoint
+1. **`AS base`**: ~40+ development tools, Docker CE, Node.js 26, Python 3.13, Rust toolchain
+2. **`AS python-rt`**: Python packages (cocoindex, torch/rocm, jax, huggingface, etc.)
+3. **`AS perl-rt`**: Perl CPAN modules (JSON, Crypt::OpenSSL::RSA, Net::Curl, etc.)
+4. **`AS oc-install`**: opencode binary, npm packages, cocoindex provider registration
+5. **`AS rust-rt`**: Rust cargo packages (minijinja-cli)
+6. **`AS runtime`**: Combines all stages, copies configs, sets entrypoint
 
 ### Cache Busting Mechanism
 
@@ -179,9 +182,9 @@ docker buildx bake -f docker-bake.hcl release \
 
 ---
 
-## 🔧 Configuration (opencode.json)
+## 🔧 Configuration (opencode_fn.json)
 
-The configuration file lives at `/workspace/opencode.json` inside the image.
+The configuration file (`opencode_fn.json`) is copied to `/workspace/opencode.json` inside the image at build time.
 
 ### Configuration Schema
 
@@ -313,7 +316,7 @@ bash opencode.sh -opencode
 
 | Aspect | Status | Notes |
 |--------|--------|-------|
-| Privilege dropping | ✅ | Root → UID 1000 |
+| Privilege dropping | ✅ | Root → UID 2000 (user `oc`) |
 | Docker socket mounting | ⚠️ | Requires `--privileged=true` or host socket |
 | GPU passthrough | ✅ | Requires kernel permissions |
 | SSH agent sharing | ⚠️ | Script warns "dangerous" |
@@ -334,7 +337,7 @@ bash opencode.sh -opencode
 
 ```
 /workdir/opencode.git/
-├── Dockerfile           # Multi-stage build (~4 stages)
+├── Dockerfile           # Multi-stage build (6 stages)
 ├── opencode.pl            # Perl entrypoint - main logic
 │   - Drop privileges (root → UID)
 │   - Setup environment
@@ -345,7 +348,7 @@ bash opencode.sh -opencode
 │   - Set environment variables
 │   - Launch container
 ├── opencode            # Thin wrapper around opencode.sh with -opencode flag
-├── opencode.json       # Agent configuration
+├── opencode_fn.json    # Agent configuration (copied to /workspace/opencode.json at build)
 ├── docker-bake.hcl     # Build targets and configuration
 ├── plugins/            # Custom opencode plugins
 │   └── opencode-slot-cache/
@@ -408,7 +411,7 @@ This is a community-maintained project. Feel free to:
 - Review dockerd logs in `/workspace/docker/*.log`
 
 #### Config not loading
-- Ensure `opencode.json` uses `$schema` for validation
+- Ensure `opencode_fn.json` uses `$schema` for validation
 - Restart the container after config changes
 - Check for environment variable substitution errors
 
