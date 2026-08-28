@@ -1,5 +1,5 @@
 #!/bin/bash
-TARGET_DB=/workspace/.local/share/opencode/opencode.db
+TARGET_DB="${XDG_DATA_HOME:-/oc}/opencode/opencode.db"
 
 if [ -f "$TARGET_DB" ]; then
     sqlite3 "$TARGET_DB" <<EOF
