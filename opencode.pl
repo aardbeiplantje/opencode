@@ -45,16 +45,6 @@ if(length($ctr_s) and -S $ctr_s){
         or die "[ERROR] changing ownership of $ctr_s to $UID:$GID: $!\n";
 }
 
-# make /workspace/.bash_history, own by UID/GID
-my $history_path = "$workspace/.bash_history";
-if(!-f $history_path){
-    open(my $fh, ">", $history_path)
-        or die "[ERROR] failed to create $history_path: $!\n";
-    close($fh);
-    chown($UID, $GID, $history_path)
-        or die "[ERROR] changing ownership of $history_path to $UID:$GID: $!\n";
-}
-
 # make /workspace/.bashrc own by root
 if(length($ENV{ROCM_PATH}//"")){
     $ENV{PATH} = "$ENV{PATH}:$ENV{ROCM_PATH}/bin";
@@ -227,8 +217,6 @@ my $hdir = $ENV{HDIR} || "/oc";
 $ENV{XDG_DATA_HOME}  = "$hdir/oc";
 $ENV{XDG_CONFIG_HOME}= "$hdir/oc";
 $ENV{XDG_CACHE_HOME} = "$hdir/oc";
-$ENV{PROMPT_COMMAND} = 'history -a';
-$ENV{HISTFILE}   = $history_path;
 $ENV{HOME}       = $hdir;
 $ENV{LOGNAME}  //= "oc";
 $ENV{PATH}       = "$hdir/.npm-global/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:$ENV{PATH}";
