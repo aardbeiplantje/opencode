@@ -111,6 +111,7 @@ exec docker run --rm -it \
     --device /dev/accel \
     --network=host \
     --name opencode-${LOGNAME}-${BDIR} \
+    -v opencode-${LOGNAME}-data:/oc/oc \
     -v opencode-${LOGNAME}-workspace:/workspace \
     -v "${PWD}":/workdir/${BDIR} \
         "$DOCKER_IMAGE" \
