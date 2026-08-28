@@ -93,7 +93,11 @@
     },
     "nvidia": {
       "models": {
-        "nemotron-3.5-lightning": {
+        "nemotron-3-nano-omni-30b-a3b-reasoning": {
+        },
+        "nemotron-3.5-lightning-30b-a3b": {
+        },
+        "nemotron-3-ultra-550b-a55b": {
         }
       }
     }

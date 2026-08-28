@@ -10,5 +10,8 @@
   "cerebras": {
     "type": "api",
     "key": "{env:CEREBRAS_API_KEY}"
-  }
+  },
+  "lemonade": {
+    "type": "api"
+   }
 }
