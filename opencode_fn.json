@@ -165,6 +165,11 @@
       "type": "local",
       "enabled": true,
       "command": ["python3", "/mcp/llama-slot-cache/server.py"]
+    },
+    "searxng": {
+      "type": "local",
+      "enabled": true,
+      "command": ["python3", "/mcp/searxng/server.py"]
     }
   }
 }

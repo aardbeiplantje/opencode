@@ -79,6 +79,7 @@ exec docker run --rm -it \
     -e LLAMA_SLOT_IDS \
     -e LLAMA_SLOT_ID_PLAN \
     -e LLAMA_SLOT_ID_BUILD \
+    -e SEARXNG_URL \
     -e INDEX_MODEL=${INDEX_MODEL:-embeddinggemma-300M-Q8_0} \
     -e GIT_AUTHOR_NAME \
     -e GIT_AUTHOR_EMAIL \
