@@ -243,9 +243,9 @@ LABEL version="0.1.0"
 
 USER root
 ENV HDIR=/oc
-#COPY --from=perl-rt      /oc/ /oc/
+COPY --from=perl-rt      /oc/ /oc/
 #COPY --from=python-rt    /oc/ /oc/
-#COPY --from=rust-rt      /oc/ /oc/
+COPY --from=rust-rt      /oc/ /oc/
 #COPY --from=arduino-rt   /oc/ /oc/
 
 # Install basic development tools and iptables/ipset
