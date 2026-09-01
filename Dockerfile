@@ -132,29 +132,28 @@ ENV PIP_BREAK_SYSTEM_PACKAGES=1
 ENV PIP_ROOT_USER_ACTION=ignore
 ENV PATH=$HDIR/.local/bin:$PATH
 
-# cocoindex + torch + ML stack
+# Python runtime: PyTorch, JAX, ROCm, and other ML development tools
 RUN \
     --mount=target=/cache,type=cache,sharing=locked,uid=1000 \
     XDG_CACHE_HOME=/cache \
     python3 -m pip install --prefer-binary --upgrade \
         ddgs \
-        cocoindex-code mcp httpx \
-        --extra-index-url https://repo.amd.com/rocm/whl/gfx1151/ \
-        "rocm[libraries,devel]" \
-        torch \
-        torchvision \
-        torchaudio \
-        "jax_rocm7_plugin==0.9.1+rocm7.13.0" \
-        "jax_rocm7_pjrt==0.9.1+rocm7.13.0" \
-        "triton==3.6.0+rocm7.13.0" \
-        tf-keras \
-        "jax==0.9.1" \
-        "jaxlib==0.9.1" \
-        https://rocm.frameworks.amd.com/whl/gfx1151/flash_attn-2.8.3-py3-none-any.whl \
-        accelerate \
-        pygame \
-        sqlalchemy comfy_aimdo blake3 alembic comfy_kitchen torchsde \
-        huggingface_hub==1.19.0
+            --extra-index-url https://repo.amd.com/rocm/whl/gfx1151/ \
+            "rocm[libraries,devel]" \
+            torch \
+            torchvision \
+            torchaudio \
+            "jax_rocm7_plugin==0.9.1+rocm7.13.0" \
+            "jax_rocm7_pjrt==0.9.1+rocm7.13.0" \
+            "triton==3.6.0+rocm7.13.0" \
+            tf-keras \
+            "jax==0.9.1" \
+            "jaxlib==0.9.1" \
+            https://rocm.frameworks.amd.com/whl/gfx1151/flash_attn-2.8.3-py3-none-any.whl \
+            accelerate \
+            pygame \
+            sqlalchemy comfy_aimdo blake3 alembic comfy_kitchen torchsde \
+            huggingface_hub==1.19.0
 
 FROM base-image AS perl-rt
 
@@ -322,7 +321,12 @@ ENV PATH=$HDIR/.local/bin:$PATH
 RUN \
     --mount=target=/cache,type=cache,sharing=locked,uid=1000 \
     XDG_CACHE_HOME=/cache \
-    sh -c 'for r in /mcp/*/requirements.txt; do python3 -m pip install --prefer-binary --upgrade -r "$r" || exit $?; done'
+    sh -c 'for r in /mcp/*/requirements.txt; do python3 -m pip install --prefer-binary --upgrade --break-system-packages -r "$r" || exit $?; done'
+
+# Add user site-packages to Python path so ccc and other user-local packages are importable
+USER root
+RUN echo "/oc/.local/lib/python3.13/site-packages" > /usr/local/lib/python3.13/dist-packages/user-local.pth
+USER oc
 
 ENV PIP_BREAK_SYSTEM_PACKAGES=1
 ENV PIP_ROOT_USER_ACTION=ignore

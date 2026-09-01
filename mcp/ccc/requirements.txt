@@ -1,3 +1,4 @@
+cocoindex-code
 mcp[cli]
 fastmcp-slim[server]
 fastmcp
