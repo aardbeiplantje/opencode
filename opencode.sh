@@ -90,6 +90,7 @@ exec docker run --rm -it \
     -e NVIDIA_API_KEY \
     -e GIT_EDITOR="true" \
     -e ROCM_PATH=/opt/rocm \
+    -e LD_LIBRARY_PATH=/opt/rocm/lib \
     -e DISPLAY \
     -v /tmp/.X11-unix:/tmp/.X11-unix:ro \
     -v $ROCM_PATH:/opt/rocm:ro \
