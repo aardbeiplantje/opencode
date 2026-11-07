@@ -6,7 +6,8 @@
       "name": "llama-server (local)",
       "options": {
         "apiKey": "{env:LLAMA_SERVER_API_KEY}",
-        "baseURL": "{env:LLAMA_SERVER_URL}"
+        "baseURL": "{env:LLAMA_SERVER_URL}",
+        "reasoningEffort": "low"
       },
       "body": {
         "cache_prompt": true
@@ -119,35 +120,56 @@
   },
   "agent": {
     "primary": {
-      "default": "build"
+      "default": "build",
+      "options": {
+        "reasoningEffort": "none"
+      }
     },
     "plan": {
       "mode": "primary",
-      "model": "llama.cpp/{env:LLAMA_MODEL}/plan"
+      "model": "llama.cpp/{env:LLAMA_MODEL}/plan",
+      "options": {
+        "reasoningEffort": "medium"
+      }
     },
     "build": {
       "mode": "primary",
-      "model": "llama.cpp/{env:LLAMA_MODEL}/build"
+      "model": "llama.cpp/{env:LLAMA_MODEL}/build",
+      "options": {
+        "reasoningEffort": "low"
+      }
     },
     "explore1": {
       "mode": "subagent",
       "description": "Primary read-only codebase explorer for pattern matching, grep, and file inspection.",
-      "model": "llama.cpp/{env:LLAMA_MODEL}/explore1"
+      "model": "llama.cpp/{env:LLAMA_MODEL}/explore1",
+      "options": {
+        "reasoningEffort": "low"
+      }
     },
     "explore2": {
       "mode": "subagent",
       "description": "Secondary read-only codebase explorer for parallel search, file inspection, and dependency tracing.",
-      "model": "llama.cpp/{env:LLAMA_MODEL}/explore2"
+      "model": "llama.cpp/{env:LLAMA_MODEL}/explore2",
+      "options": {
+        "reasoningEffort": "low"
+      }
     },
     "verifier": {
       "mode": "subagent",
       "description": "Runs test suites, typecheckers, and linters via bash commands to verify correctness.",
-      "model": "llama.cpp/{env:LLAMA_MODEL}/verifier"
+      "model": "llama.cpp/{env:LLAMA_MODEL}/verifier",
+      "options": {
+        "reasoningEffort": "low"
+      }
     },
     "default": {
       "max_concurrency": 2,
       "force_sequential_tasks": false,
-      "allowed_subagents": ["explore1", "explore2", "verifier"]
+      "allowed_subagents": ["explore1", "explore2", "verifier"],
+      "options": {
+        "reasoningEffort": "low"
+      }
     }
   },
   "mcp": {
