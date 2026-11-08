@@ -57,6 +57,7 @@ ROCM_PATH=${ROCM_PATH:-/opt/rocm}
 ROCM_PATH=$(readlink -f "$ROCM_PATH")
 exec docker run --rm -it \
     $extra_opts \
+    $DOCKER_ARGS \
     $DOCKER_RUN_OPTS \
     -e TERM \
     -e ALL_PROXX \
